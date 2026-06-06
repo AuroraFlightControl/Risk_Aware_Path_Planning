@@ -1,7 +1,9 @@
 import logging, json, time
+import numpy as np
 
 # Enviroment Imports
-
+from sim_src.enviroment import World
+from sim_src.enviroment.Obstacle import CircularObstacle, RectObstacle_Aligned, PolyObstacle
 # Agent Imports
 
 # Simulation Imports
@@ -12,7 +14,19 @@ import logging, json, time
 
 # Functions to load the enviroment for the simulation and establish the World Object
 def load_Obstacles(scene_Data: dict):
-    pass
+    obstacles = []
+    for obs in scene_Data["Obstacles"]:
+        if obs["Type"] == "Circle":
+            obstacles.append(CircularObstacle(c=np.array([obs["Center_X"], obs["Center_Y"]]), r=obs["Radius"]))
+        elif obs["Type"] == "Rectangle":
+            obstacles.append(RectObstacle_Aligned(xmin=obs["xmin"], xmax=obs["xmax"], ymin=obs["ymin"], ymax=obs["ymax"]))
+        elif obs["Type"] == "Polygon":
+            x = obs['Vert_x']
+            y = obs['Vert_y']
+            verticies = np.array([x, y]).transpose()
+            obstacles.append(PolyObstacle(verts=verticies))
+        else:
+            raise ValueError(f"Unknown obstacle type: {obs['Type']}")
 
 def load_Traffic(scene_Data: dict):
     pass
@@ -41,7 +55,7 @@ def load_Config(config_Data: dict) -> object:
     print(f"Project Description: {Project_Description}")
     print(f"Run Type: {Run_Type}")
 
-
+    Obstacles = load_Obstacles(config_Data)
 
 
 # Function to load, establish, and run the Simulation Object

@@ -1,5 +1,57 @@
 {
     "Project_Name": "Test_Project",
     "Project_Description": "This is a test project for demonstration purposes.",
-    "Run_Type": "Single"
+    "Run_Type": "Single",
+
+    "Sim_Params": {
+        "Time_Step": 0.01,
+        "Max_Time": 10.0
+    },
+
+    "Bounds": {
+        "X_Min": 0.0,
+        "X_Max": 100.0,
+        "Y_Min": 0.0,
+        "Y_Max": 100.0
+    },
+
+    "Start": {
+        "X": 10.0,
+        "Y": 10.0
+    },
+
+    "Goal": {
+        "X": 90.0,
+        "Y": 90.0
+    },
+
+    "Obstacles": [
+        {
+            "Type": "Circle",
+            "Center_X": 2.0,
+            "Center_Y": 2.0,
+            "Radius": 1.0
+        },
+        {
+            "Type": "Rectangle",
+            "xmin": 3.0,
+            "ymin": 3.0,
+            "xmax": 5.0,
+            "ymax": 5.0
+        },
+        {
+            "Type": "Polygon",
+            "Vert_x": [60.0, 72.0, 66.0, 58.0],
+            "Vert_y": [15.0, 18.0, 30.0, 26.0]
+            }
+    ],
+
+    "Intruders": [
+        {
+            "Start_X": -5.0,
+            "Start_Y": -5.0,
+            "Velocity_X": 0.5,
+            "Velocity_Y": 0.5
+        }
+    ]
 }
