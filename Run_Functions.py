@@ -1,7 +1,9 @@
 import logging, json, time
 import numpy as np
+from typing import Optional
 
 # Enviroment Imports
+from plan_src.planner_base import Planner
 from sim_src.agents.Holonomic_Agent import HolonomicAgent
 from sim_src.enviroment.World import World
 from sim_src.enviroment.Bounds import Bounds
@@ -10,7 +12,7 @@ from sim_src.enviroment.Obstacle import CircularObstacle, RectObstacle_Aligned, 
 
 # Simulation Imports
 from sim_src.simulation.Simulation import Agent, Simulation, SimConfig, SimLog
-from visualizations.Std_Visual import visualize_enviroment, visualize_trajectory
+from visualizations.Std_Visual import *
 
 # Planning Modules Imports
 
@@ -54,16 +56,20 @@ def load_World(scene_Data: dict) -> World:
 
 
 # Functions to load agents and planners for the simulation and establish the Agent Objects
-def load_Planner(planner_Data: dict) -> object:
+def load_Planner(planner_Data: dict) -> None: # Planner
     pass
 
-def load_Agent(config: dict) -> Agent:
+def load_Agent(config: dict, world: World, planner: Optional[Planner] = None) -> Agent:
     if "Agent" not in config:
         logging.error("Agent configuration missing in config file.")
-        return HolonomicAgent(position=np.array([config["Start"]["X"], config["Start"]["Y"]]), velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=np.array([config["Goal"]["X"], config["Goal"]["Y"]]))
+        if planner is not None:
+            logging.info(f"Loading default Holonomic Agent with radius {config['Radius']} and planner {planner}")
+            return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal, planner=planner, world=world)
+        else:
+            return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal, world=world)
     if config["Agent"]["Type"] == "Holonomic" or config["Agent"]["Type"] == "Quad":
         logging.info(f"Loading {config['Agent']['Type']} Agent with radius {config['Agent']['Radius']}")
-        return HolonomicAgent(position=np.array([config["Start"]["X"], config["Start"]["Y"]]), velocity=np.array([0, 0]), radius=config["Agent"]["Radius"], current_trgt=np.array([config["Goal"]["X"], config["Goal"]["Y"]]))
+        return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Agent"]["Radius"], current_trgt=world.goal, planner=planner, world=world)
     else:
         logging.error(f"Unknown agent type: {config['Agent']['Type']}")
         raise ValueError(f"Unknown agent type: {config['Agent']['Type']}")
@@ -96,14 +102,18 @@ def run_Simulation(simulation: Simulation) -> SimLog:
     return simulation.log
 
 
-def run_Single(config_Data: dict):
+def run_Single(config_Data: dict, planner: Optional[Planner] = None):
     world = load_World(config_Data)
-    agent = load_Agent(config_Data)
-    simulation = load_Simulation(config_Data, world, agent)
+    agent = load_Agent(config=config_Data, world=world, planner=planner)
+    simulation = load_Simulation(config_Data=config_Data, world=world, agent=agent)
     simulation_log = run_Simulation(simulation)
 
     # Visualize the results
     #visualize_enviroment(world)
-    visualize_trajectory(world, np.array(simulation_log.agent_positions))
+    #visualize_trajectory(world, np.array(simulation_log.agent_positions))
+    visualize_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time))
+    #animate_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time), playback_speed_ms=50)
+    
+
 
     return simulation_log

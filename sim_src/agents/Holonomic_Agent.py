@@ -1,14 +1,29 @@
 import numpy as np
 from dataclasses import dataclass
 from typing import Optional, List
+from plan_src.planner_base import Planner, PlanResult
+from sim_src.enviroment.World import World
 
 @dataclass
 class HolonomicAgent:
     position: np.ndarray
     velocity: np.ndarray
     current_trgt: np.ndarray # Current target position for the agent
+    world: World  # Reference to the world for planner action
     radius: float = 1.0
+    planner: Optional[Planner] = None  # Optional planner for the agent
     path: Optional[List[np.ndarray]] = None  # Optional path for the agent to follow
+
+    def run_planner(self):
+        """Run the planner to update the path and current target."""
+        if self.planner is not None:
+            if self.position != self.world.start:
+                self.PlanResult = self.planner.plan(world=self.world, start=self.position)
+            else:
+                self.PlanResult = self.planner.plan(world=self.world)
+            self.plan = self.PlanResult.plan
+            if self.path is not None and len(self.path) > 0:
+                self.current_trgt = self.path[0]  # Update current target to the first waypoint in the path
 
     def wpt_cycle(self):
         """Waypoint cycling function to update the current target based on the path."""
@@ -34,6 +49,7 @@ class HolonomicAgent:
     def step(self, dt: float) -> None:
         """Update the agent's position and velocity based on the control input."""
 
+        self.run_planner()
         self.wpt_cycle()
 
         self.velocity = self.control_input(self.current_trgt)
