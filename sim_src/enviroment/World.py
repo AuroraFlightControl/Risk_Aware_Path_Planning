@@ -10,7 +10,9 @@ from .Bounds import Bounds
 @dataclass
 class World:
     bounds: Bounds
-    obstacles: List[object]
+    start: np.ndarray
+    goal: np.ndarray
+    obstacles: Optional[List[object]] = None
     Traffic: Optional[List[object]] = None
 
 

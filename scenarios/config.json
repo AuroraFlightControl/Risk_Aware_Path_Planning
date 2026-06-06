@@ -28,16 +28,16 @@
     "Obstacles": [
         {
             "Type": "Circle",
-            "Center_X": 2.0,
-            "Center_Y": 2.0,
-            "Radius": 1.0
+            "Center_X": 30.0,
+            "Center_Y": 20.0,
+            "Radius": 10.0
         },
         {
             "Type": "Rectangle",
-            "xmin": 3.0,
-            "ymin": 3.0,
-            "xmax": 5.0,
-            "ymax": 5.0
+            "xmin": 30.0,
+            "ymin": 30.0,
+            "xmax": 50.0,
+            "ymax": 50.0
         },
         {
             "Type": "Polygon",
