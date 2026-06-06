@@ -2,12 +2,15 @@ import logging, json, time
 import numpy as np
 
 # Enviroment Imports
+from sim_src.agents.Holonomic_Agent import HolonomicAgent
 from sim_src.enviroment.World import World
 from sim_src.enviroment.Bounds import Bounds
 from sim_src.enviroment.Obstacle import CircularObstacle, RectObstacle_Aligned, PolyObstacle
 # Agent Imports
 
 # Simulation Imports
+from sim_src.simulation.Simulation import Agent, Simulation, SimConfig, SimLog
+from visualizations.Std_Visual import visualize_enviroment, visualize_trajectory
 
 # Planning Modules Imports
 
@@ -19,13 +22,13 @@ def load_Obstacles(scene_Data: dict):
     obstacles = []
     for obs in scene_Data["Obstacles"]:
         if obs["Type"] == "Circle":
-            logging.info(f"Loading Circular Obstacle: Center=({obs['Center_X']}, {obs['Center_Y']}), Radius={obs['Radius']}")
+            #logging.info(f"Loading Circular Obstacle: Center=({obs['Center_X']}, {obs['Center_Y']}), Radius={obs['Radius']}")
             obstacles.append(CircularObstacle(c=np.array([obs["Center_X"], obs["Center_Y"]]), r=obs["Radius"]))
         elif obs["Type"] == "Rectangle":
-            logging.info(f"Loading Rectangular Obstacle: ({obs['xmin']}, {obs['ymin']}) to ({obs['xmax']}, {obs['ymax']})")
+            #logging.info(f"Loading Rectangular Obstacle: ({obs['xmin']}, {obs['ymin']}) to ({obs['xmax']}, {obs['ymax']})")
             obstacles.append(RectObstacle_Aligned(xmin=obs["xmin"], xmax=obs["xmax"], ymin=obs["ymin"], ymax=obs["ymax"]))
         elif obs["Type"] == "Polygon":
-            logging.info(f"Loading Polygonal Obstacle with vertices: {list(zip(obs['Vert_x'], obs['Vert_y']))}")
+            #logging.info(f"Loading Polygonal Obstacle with vertices: {list(zip(obs['Vert_x'], obs['Vert_y']))}")
             x = obs['Vert_x']
             y = obs['Vert_y']
             verticies = np.array([x, y]).transpose()
@@ -39,7 +42,7 @@ def load_Obstacles(scene_Data: dict):
 def load_Traffic(scene_Data: dict):
     pass
 
-def load_World(scene_Data: dict) -> object:
+def load_World(scene_Data: dict) -> World:
 
     bounds = Bounds(xmin=scene_Data["Bounds"]["X_Min"], xmax=scene_Data["Bounds"]["X_Max"], ymin=scene_Data["Bounds"]["Y_Min"], ymax=scene_Data["Bounds"]["Y_Max"])
     start = np.array([scene_Data["Start"]["X"], scene_Data["Start"]["Y"]])
@@ -47,18 +50,26 @@ def load_World(scene_Data: dict) -> object:
     obstacles = load_Obstacles(scene_Data)
     traffic = load_Traffic(scene_Data)
 
-    return World(bounds=bounds, start=start, goal=goal, obstacles=obstacles, Traffic=traffic)
+    return World(bounds=bounds, start=start, goal=goal, obstacles=obstacles, traffic=traffic)
 
 
 # Functions to load agents and planners for the simulation and establish the Agent Objects
 def load_Planner(planner_Data: dict) -> object:
     pass
 
-def load_Agent(agent_Data: dict) -> object:
-    pass
+def load_Agent(config: dict) -> Agent:
+    if "Agent" not in config:
+        logging.error("Agent configuration missing in config file.")
+        return HolonomicAgent(position=np.array([config["Start"]["X"], config["Start"]["Y"]]), velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=np.array([config["Goal"]["X"], config["Goal"]["Y"]]))
+    if config["Agent"]["Type"] == "Holonomic" or config["Agent"]["Type"] == "Quad":
+        logging.info(f"Loading {config['Agent']['Type']} Agent with radius {config['Agent']['Radius']}")
+        return HolonomicAgent(position=np.array([config["Start"]["X"], config["Start"]["Y"]]), velocity=np.array([0, 0]), radius=config["Agent"]["Radius"], current_trgt=np.array([config["Goal"]["X"], config["Goal"]["Y"]]))
+    else:
+        logging.error(f"Unknown agent type: {config['Agent']['Type']}")
+        raise ValueError(f"Unknown agent type: {config['Agent']['Type']}")
 
 # Function to load the configuration file
-def load_Config(config_Data: dict) -> object:
+def load_Config(config_Data: dict) -> World:
     Project_Name = config_Data["Project_Name"]
     Project_Description = config_Data["Project_Description"]
     Run_Type = config_Data["Run_Type"]
@@ -73,8 +84,26 @@ def load_Config(config_Data: dict) -> object:
 
 
 # Function to load, establish, and run the Simulation Object
-def load_Simulation(sim_Data: dict) -> object:
-    pass
+def load_Simulation(config_Data: dict, world: World, agent: Agent) -> Simulation:
+    simConfig = SimConfig(dt=config_Data["Sim_Params"]["Time_Step"], max_Time=config_Data["Sim_Params"]["Max_Time"])
+    simulation = Simulation(world=world, agent=agent, config=simConfig)
+    return simulation
 
-def run_Simulation(simulation: object) -> None:
-    pass
+def run_Simulation(simulation: Simulation) -> SimLog:
+    logging.info(f"Running Simulation...")
+    simulation.run()
+    logging.info(f"Simulation Completed.")
+    return simulation.log
+
+
+def run_Single(config_Data: dict):
+    world = load_World(config_Data)
+    agent = load_Agent(config_Data)
+    simulation = load_Simulation(config_Data, world, agent)
+    simulation_log = run_Simulation(simulation)
+
+    # Visualize the results
+    #visualize_enviroment(world)
+    visualize_trajectory(world, np.array(simulation_log.agent_positions))
+
+    return simulation_log

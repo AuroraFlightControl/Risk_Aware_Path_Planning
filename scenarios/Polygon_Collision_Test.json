@@ -31,14 +31,15 @@
     },
 
     "Obstacles": [
+
+        {
+            "Type": "Polygon",
+            "Vert_x": [70.0, 40.0, 30.0, 60.0],
+            "Vert_y": [30.0, 40.0, 70.0, 60.0]
+            }
     ],
 
     "Intruders": [
-        {
-            "Start_X": -5.0,
-            "Start_Y": -5.0,
-            "Velocity_X": 0.5,
-            "Velocity_Y": 0.5
-        }
+
     ]
 }

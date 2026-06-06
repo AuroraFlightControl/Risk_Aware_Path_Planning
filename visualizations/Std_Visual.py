@@ -47,4 +47,15 @@ def visualize_world(world: World):
     ax.set_xlabel('Position X (feet)')
     ax.set_ylabel('Position Y (feet)')
 
+def visualize_enviroment(world: World):
+    visualize_world(world)
+    plt.legend()
+    plt.title('World Visualization')
+    plt.show()
+
+def visualize_trajectory(world: World, trajectory: np.ndarray):
+    visualize_world(world)
+    plt.plot(trajectory[:, 0], trajectory[:, 1], 'b-', label='Trajectory')
+    plt.legend()
+    plt.title('Trajectory Visualization')
     plt.show()

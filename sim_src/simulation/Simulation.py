@@ -1,7 +1,19 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, Protocol
 import numpy as np
-import math
+import math, logging
+
+
+from sim_src.enviroment.World import World
+
+class Agent(Protocol):
+    position: np.ndarray
+    velocity: np.ndarray
+    radius: float
+
+
+    def step(self, dt: float) -> None:
+        ...
 
 @dataclass
 class SimConfig:
@@ -30,8 +42,10 @@ class Simulation:
     """
     This is the main class for the simulation. It is used to run the simulation and store the log of the simulation.
     """
-    def __init__(self, config: SimConfig):
+    def __init__(self, config: SimConfig, world: World, agent: Agent):
         self.config = config
+        self.world = world
+        self.agent = agent
         self.log = SimLog(time=[], agent_positions=[], agent_velocities=[], plan_ids=[])
 
     def run(self):
@@ -41,13 +55,34 @@ class Simulation:
         # Run the simulation loop
         current_time = 0.0
         while current_time < self.config.max_Time:
+ 
             # Update the positions and velocities of the agents here
+            self.agent.step(self.config.dt)
+
+            # Check for collisions and other failure conditions
+            if not self.world.is_collision_free(self.agent.position, vehicle_radius=self.agent.radius, time=current_time):
+                self.log.success = False
+                self.log.reason = "Collision with obstacle or traffic"
+                logging.info(f"Simulation failed at time {current_time:.2f} seconds: {self.log.reason}")
+                break
+
+            # Check if the agent has reached the goal
+            if np.linalg.norm(self.agent.position - self.world.goal) < self.agent.radius:
+                self.log.success = True
+                logging.info(f"Simulation successful! Agent reached the goal at time {current_time:.2f} seconds.")
+                break
 
             # Store the data in the log here
-
-            # Check for success or failure conditions here
+            self.log.time.append(current_time)
+            self.log.agent_positions.append(self.agent.position.copy())
+            self.log.agent_velocities.append(self.agent.velocity.copy())
 
             # Increment the time
             current_time += self.config.dt
+            if current_time >= self.config.max_Time:
+                self.log.success = False
+                self.log.reason = "Maximum simulation time reached without reaching the goal"
+                logging.info(f"Simulation failed at time {current_time:.2f} seconds: {self.log.reason}")
+                break
         
         return self.log

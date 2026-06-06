@@ -1,0 +1,11 @@
+{
+    "Project_Name": "Test_Project",
+    "Project_Description": "This is a test project for demonstration purposes.",
+    "Run_Type": "Batch",
+
+    "Files": [
+        "Circle_Collision_Test.json",
+        "Rectangle_Collision_Test.json",
+        "Polygon_Collision_Test.json"
+    ]
+}

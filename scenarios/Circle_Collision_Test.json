@@ -31,6 +31,12 @@
     },
 
     "Obstacles": [
+        {
+            "Type": "Circle",
+            "Center_X": 30.0,
+            "Center_Y": 20.0,
+            "Radius": 10.0
+        }
     ],
 
     "Intruders": [

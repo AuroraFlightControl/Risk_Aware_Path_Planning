@@ -31,6 +31,13 @@
     },
 
     "Obstacles": [
+        {
+            "Type": "Rectangle",
+            "xmin": 30.0,
+            "ymin": 30.0,
+            "xmax": 50.0,
+            "ymax": 50.0
+        }
     ],
 
     "Intruders": [
