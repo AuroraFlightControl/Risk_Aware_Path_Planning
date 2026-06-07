@@ -1,6 +1,6 @@
 {
-    "Project_Name": "Test_Project",
-    "Project_Description": "This is a test project for demonstration purposes.",
+    "Project_Name": "Test_Collision",
+    "Project_Description": "This is a test project for testing Obstacle Collision Detection.",
     "Run_Type": "Batch",
 
     "Files": [

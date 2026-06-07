@@ -12,10 +12,13 @@ from sim_src.enviroment.Obstacle import CircularObstacle, RectObstacle_Aligned, 
 
 # Simulation Imports
 from sim_src.simulation.Simulation import Agent, Simulation, SimConfig, SimLog
+
+# Visualization Imports
 from visualizations.Std_Visual import *
+from visualizations.Occupy_Grid_Viz import *
 
 # Planning Modules Imports
-
+from plan_src.Occupy_Grid import OccupyGrid
 
 
 # Functions to load the enviroment for the simulation and establish the World Object
@@ -107,6 +110,14 @@ def run_Single(config_Data: dict, planner: Optional[Planner] = None):
     agent = load_Agent(config=config_Data, world=world, planner=planner)
     simulation = load_Simulation(config_Data=config_Data, world=world, agent=agent)
     simulation_log = run_Simulation(simulation)
+
+
+    occupyGrid = OccupyGrid(world=world, resolution=0.5)
+    occupyGrid.build_grid()
+
+    visualize_occupancy_grid(world=world, occ_grid=occupyGrid)
+
+
 
     # Visualize the results
     #visualize_enviroment(world)

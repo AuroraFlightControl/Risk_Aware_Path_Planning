@@ -1,6 +1,6 @@
 {
-    "Project_Name": "Test_Circle_Collision",
-    "Project_Description": "Circle Obstacle Collision Test.",
+    "Project_Name": "Test_All_Obstacles",
+    "Project_Description": "This is a test project for demonstration of Occypancy Grid.",
     "Run_Type": "Single",
 
     "Sim_Params": {
@@ -36,6 +36,18 @@
             "Center_X": 30.0,
             "Center_Y": 20.0,
             "Radius": 10.0
+        },
+        {
+            "Type": "Rectangle",
+            "xmin": 30.0,
+            "ymin": 30.0,
+            "xmax": 50.0,
+            "ymax": 50.0
+        },
+        {
+            "Type": "Polygon",
+            "Vert_x": [70.0, 40.0, 30.0, 60.0],
+            "Vert_y": [30.0, 40.0, 70.0, 60.0]
         }
     ],
 

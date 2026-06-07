@@ -1,6 +1,6 @@
 {
-    "Project_Name": "Test_Project",
-    "Project_Description": "This is a test project for demonstration purposes.",
+    "Project_Name": "Test_Rectangle_Collision",
+    "Project_Description": "This is a test project for testing rectangular obstacle collision detection.",
     "Run_Type": "Single",
 
     "Sim_Params": {
