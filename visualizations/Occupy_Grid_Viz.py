@@ -33,7 +33,7 @@ def visualize_occupancy_grid(world: World, occ_grid: OccupyGrid):
         cmap='Reds',           # Red shows collisions well
         alpha=0.3,             # Make it semi-transparent so we can see obstacles underneath
         origin='lower', 
-        extent=[occ_grid.x_min, occ_grid.x_max, occ_grid.y_min, occ_grid.y_max]
+        extent=(occ_grid.x_min, occ_grid.x_max, occ_grid.y_min, occ_grid.y_max)
     )
 
     plt.title(f'Occupancy Grid (Resolution: {occ_grid.resolution})')

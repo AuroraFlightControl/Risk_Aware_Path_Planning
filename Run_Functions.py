@@ -67,12 +67,12 @@ def load_Agent(config: dict, world: World, planner: Optional[Planner] = None) ->
         logging.error("Agent configuration missing in config file.")
         if planner is not None:
             logging.info(f"Loading default Holonomic Agent with radius {config['Radius']} and planner {planner}")
-            return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal, planner=planner, world=world)
+            return HolonomicAgent(position=world.start.copy(), velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal.copy(), planner=planner, world=world)
         else:
-            return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal, world=world)
+            return HolonomicAgent(position=world.start.copy(), velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal.copy(), world=world)
     if config["Agent"]["Type"] == "Holonomic" or config["Agent"]["Type"] == "Quad":
         logging.info(f"Loading {config['Agent']['Type']} Agent with radius {config['Agent']['Radius']}")
-        return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Agent"]["Radius"], current_trgt=world.goal, planner=planner, world=world)
+        return HolonomicAgent(position=world.start.copy(), velocity=np.array([0, 0]), radius=config["Agent"]["Radius"], current_trgt=world.goal.copy(), planner=planner, world=world)
     else:
         logging.error(f"Unknown agent type: {config['Agent']['Type']}")
         raise ValueError(f"Unknown agent type: {config['Agent']['Type']}")

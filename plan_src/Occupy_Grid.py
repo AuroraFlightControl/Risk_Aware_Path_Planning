@@ -40,6 +40,19 @@ class OccupyGrid:
                     if not self.world.is_collision_free(np.array([x, y]), vehicle_radius=1.0):
                         self.grid[i, j] = True
 
+    def to_idx(self, point: np.ndarray) -> tuple[int, int]:
+         # Get grid indicies for a given point
+        x_idx = int((point[0] - self.x_min) / self.resolution)
+        y_idx = int((point[1] - self.y_min) / self.resolution)
+        return (x_idx, y_idx)
+    
+
+    def to_point(self, point: tuple[int, int]) -> np.ndarray:
+         # Get world coodinates from grid index
+         x = 0.0
+         y = 0.0
+         return np.array([x, y], dtype=float)
+
 '''
     def mark_obstacles(self):
         if self.world.obstacles is not None:
