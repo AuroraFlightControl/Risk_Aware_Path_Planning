@@ -3,7 +3,7 @@ from typing import Optional
 import numpy as np
 
 from sim_src.enviroment.World import World
-
+from plan_src.planner_base import PlanResult
 
 
 @dataclass
@@ -58,4 +58,38 @@ class MetricsEvaluator:
         pass
 
 
-    
+    class PlannerLogger:
+        def __init__(self, log_dir: str, plan_id: int = 0, debug_mode = False):
+            self.log_dir = log_dir
+            self.plan_id = plan_id
+            self.debug_mode = debug_mode
+            self.sampled_points = []
+            self.plans = []
+
+        def log_node(self, point: np.ndarray, point_type: str, point_cost: float, edge_cost: float, total_cost: float):
+            # Point Type: "sampled", "rewire", "goal", etc
+            if not self.debug_mode:
+                return
+            
+            self.sampled_points.append({
+                "plan_id": self.plan_id,
+                "x": float(point[0]),
+                "y": float(point[1]),
+                "type": point_type,
+                "point_cost": float(point_cost),
+                "edge_cost": float(edge_cost),
+                "total_path_cost": float(total_cost)
+            })
+
+        def log_result(self, Timestamp: float, PlannerResult: PlanResult):
+            pass
+
+        def save_log(self, filename: str):
+            # TODO: Add Standard Plan log for replanning. Log and save the final path with the plan id and the computation time
+            
+            
+            if self.debug_mode:
+                # TODO: Craft the CSV file saving logic for the logged sampled points 
+                pass
+            
+            
