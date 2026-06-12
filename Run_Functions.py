@@ -3,12 +3,13 @@ import numpy as np
 from typing import Optional
 
 # Enviroment Imports
-from plan_src.planner_base import Planner
-from sim_src.agents.Holonomic_Agent import HolonomicAgent
 from sim_src.enviroment.World import World
 from sim_src.enviroment.Bounds import Bounds
 from sim_src.enviroment.Obstacle import CircularObstacle, RectObstacle_Aligned, PolyObstacle
+
 # Agent Imports
+from sim_src.agents.Traffic_Agent import *
+from sim_src.agents.Holonomic_Agent import HolonomicAgent
 
 # Simulation Imports
 from sim_src.simulation.Simulation import Agent, Simulation, SimConfig, SimLog
@@ -19,6 +20,7 @@ from visualizations.Occupy_Grid_Viz import *
 
 # Planning Modules Imports
 from plan_src.Occupy_Grid import OccupyGrid
+from plan_src.planner_base import Planner
 
 
 # Functions to load the enviroment for the simulation and establish the World Object
@@ -45,7 +47,22 @@ def load_Obstacles(scene_Data: dict):
     return obstacles
 
 def load_Traffic(scene_Data: dict):
-    pass
+    traffic = []
+    traffic_id = 0
+    for intruder in scene_Data["Intruders"]:
+        if intruder["Type"] == "Constant_Velocity":
+
+            x = intruder["x"]
+            y = intruder["y"]
+            vx = intruder["vx"]
+            vy = intruder["vy"]
+
+            traffic.append(TrafficAgent(agent_id=traffic_id, initial_state=np.array([x, y, vx, vy]), strategy=ConstantVelocityStrategy()))
+
+            traffic_id += 1
+            
+        else:
+            raise ValueError(f"Unknown traffic type {intruder["Type"]}")
 
 def load_World(scene_Data: dict) -> World:
 
