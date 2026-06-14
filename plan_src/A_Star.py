@@ -68,7 +68,7 @@ class AStarGridPlanner:
         return PlanResult(plan=[], success=False, info={"reason": "No Path Found", "expansions": expansions})
 
     def heuristic(self, a: tuple[int, int], b: tuple[int, int]):
-        return math.hypot(a[0] - b[0], a[1] - b[1])
+        return math.hypot(a[0] - b[0], a[1] - b[1])*self.resolution
 
     def plan(self, world: World, start: np.ndarray):
         self.Occupancy_Grid = OccupyGrid(world=world, resolution=self.resolution)
@@ -86,7 +86,7 @@ class AStarGridPlanner:
         if self.Occupancy_Grid.is_occupied(self.goal_idx):
             return PlanResult(plan=[], success=False, info={"reason": "Goal Position is Occupied"})
         
-        plan = self.search()
+        return self.search()
 
 
 

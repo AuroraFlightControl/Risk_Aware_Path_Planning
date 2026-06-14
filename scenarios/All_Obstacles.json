@@ -52,12 +52,5 @@
     ],
 
     "Intruders": [
-        {
-            "Type": "Constant_Velocity",
-            "Start_X": -5.0,
-            "Start_Y": -5.0,
-            "Velocity_X": 3.0,
-            "Velocity_Y": 3.0
-        }
     ]
 }

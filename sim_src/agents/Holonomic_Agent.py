@@ -14,9 +14,11 @@ class HolonomicAgent:
     radius: float = 1.0
     planner: Optional[Planner] = None  # Optional planner for the agent
     path: Optional[List[np.ndarray]] = None  # Optional path for the agent to follow
+    planner_timout: bool = False
 
     def run_planner(self):
         """Run the planner to update the path and current target."""
+
         if self.planner is not None:
             if np.allclose(self.position, self.world.start):
                 self.PlanResult = self.planner.plan(world=self.world, start=self.world.start)
@@ -28,6 +30,7 @@ class HolonomicAgent:
             else:
                 self.current_target = self.world.goal
                 logging.error('Failed to plan')
+                self.planner_timout = True
 
     def wpt_cycle(self):
         """Waypoint cycling function to update the current target based on the path."""
@@ -52,8 +55,8 @@ class HolonomicAgent:
 
     def step(self, dt: float) -> None:
         """Update the agent's position and velocity based on the control input."""
-
-        self.run_planner()
+        if not self.planner_timout:
+            self.run_planner()
         self.wpt_cycle()
 
         self.velocity = self.control_input(self.current_trgt)
