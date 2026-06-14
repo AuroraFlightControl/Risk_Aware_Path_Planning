@@ -13,20 +13,20 @@ class HolonomicAgent:
     world: World  # Reference to the world for planner action
     radius: float = 1.0
     planner: Optional[Planner] = None  # Optional planner for the agent
-    path: Optional[List[np.ndarray]] = None  # Optional path for the agent to follow
+    plan: Optional[List[np.ndarray]] = None  # Optional path for the agent to follow
     planner_timout: bool = False
 
     def run_planner(self):
         """Run the planner to update the path and current target."""
 
-        if self.planner is not None:
+        if self.planner is not None and self.plan is None:
             if np.allclose(self.position, self.world.start):
                 self.PlanResult = self.planner.plan(world=self.world, start=self.world.start)
             else:
                 self.PlanResult = self.planner.plan(world=self.world, start=self.position)
             self.plan = self.PlanResult.plan
-            if self.path is not None and len(self.path) > 0:
-                self.current_trgt = self.path[0]  # Update current target to the first waypoint in the path
+            if self.plan is not None and len(self.plan) > 0:
+                self.current_trgt = self.plan[0]  # Update current target to the first waypoint in the path
             else:
                 self.current_target = self.world.goal
                 logging.error('Failed to plan')
@@ -34,12 +34,12 @@ class HolonomicAgent:
 
     def wpt_cycle(self):
         """Waypoint cycling function to update the current target based on the path."""
-        if self.path is not None and len(self.path) > 0:
+        if self.plan is not None and len(self.plan) > 0:
             # Check if the agent is close enough to the current target
             if np.linalg.norm(self.position - self.current_trgt) < self.radius:
                 # Move to the next waypoint in the path
-                self.path.append(self.path.pop(0))  # Cycle the waypoints
-                self.current_trgt = self.path[0]  # Update the current target to the next waypoint
+                self.plan.append(self.plan.pop(0))  # Cycle the waypoints
+                self.current_trgt = self.plan[0]  # Update the current target to the next waypoint
 
     def control_input(self, target: np.ndarray) -> np.ndarray:
         """Compute the control input to move towards the target."""

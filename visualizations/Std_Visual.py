@@ -95,12 +95,26 @@ def visualize_SimLog(world: World, log: SimLog):
                 if intruder_traj is None:
                     logging.warning(f'No trajectory data for intruder id {intruder.id}')
                     continue
+                
                 intruder_trajectory = np.array(intruder_traj)
                 if intruder_trajectory.size == 0:
                     continue
+                
+                # Cast to float to support np.nan injection
+                intruder_trajectory = intruder_trajectory.reshape(-1, 2).astype(float)
+                
+                # NEW: Apply NaN mask to out-of-bounds points
+                oob_mask = (intruder_trajectory[:, 0] < world.bounds.xmin) | \
+                           (intruder_trajectory[:, 0] > world.bounds.xmax) | \
+                           (intruder_trajectory[:, 1] < world.bounds.ymin) | \
+                           (intruder_trajectory[:, 1] > world.bounds.ymax)
+                intruder_trajectory[oob_mask] = np.nan
+
                 plt.plot(intruder_trajectory[:, 0], intruder_trajectory[:, 1], '--r', label=f'Intruder {intruder.id}')
+                
                 for i in range(len(intruder_trajectory)):
-                    if i % 100 == 0:  # Annotate every 100th point to avoid clutter
+                    # Check that the coordinate isn't NaN before placing the text annotation
+                    if i % 100 == 0 and not np.isnan(intruder_trajectory[i, 0]):  
                         plt.text(intruder_trajectory[i, 0], intruder_trajectory[i, 1], f'{log.time[i]:.1f}s', fontsize=8, ha='right')
     else:
         logging.info('No traffic to visualize.')
@@ -179,7 +193,7 @@ def animate_trajectory_with_time(world: World, trajectory: np.ndarray, time: np.
     # garbage collector doesn't destroy the animation if run in certain IDEs.
     return ani
 
-def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 50):
+def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 100):
     visualize_world(world)
     fig = plt.gcf()
     ax = plt.gca()
@@ -189,21 +203,35 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
 
     # 1. Initialize Graphic Objects
     path_line, = ax.plot([], [], 'b-', alpha=0.6, label='Ownship History')
-    agent_dot, = ax.plot([], [], 'bo', markersize=8, label='Ownship') # Blue circle for ownship
+    agent_dot, = ax.plot([], [], 'bo', markersize=8, label='Ownship') 
     
     traffic_data = getattr(log, 'traffic_telemetry', getattr(log, 'traffic_positions', None))
     
     traffic_lines = {}
-    traffic_icons = {} # NEW: Dictionary to hold the current position markers
+    traffic_icons = {} 
     
+    # NEW: Pre-process traffic to clip out-of-bounds
+    processed_traffic = {}
+
     if traffic_data and isinstance(traffic_data, dict):
-        for traffic_id in traffic_data.keys():
-            t_line, = ax.plot([], [], '--', color='darkred', alpha=0.5)
-            # NEW: 'rD' creates a Red Diamond. You can swap to 'rv' for a down-triangle or 'rX' for a cross
-            t_icon, = ax.plot([], [], 'rD', markersize=8, label=f'Intruder {traffic_id}')
-            
-            traffic_lines[traffic_id] = t_line
-            traffic_icons[traffic_id] = t_icon
+        for traffic_id, positions in traffic_data.items():
+            t_traj = np.array(positions)
+            if t_traj.size > 0:
+                t_traj = t_traj.reshape(-1, 2).astype(float)
+                
+                # Find out-of-bounds points
+                oob_mask = (t_traj[:, 0] < world.bounds.xmin) | \
+                           (t_traj[:, 0] > world.bounds.xmax) | \
+                           (t_traj[:, 1] < world.bounds.ymin) | \
+                           (t_traj[:, 1] > world.bounds.ymax)
+                t_traj[oob_mask] = np.nan
+                processed_traffic[traffic_id] = t_traj
+                
+                t_line, = ax.plot([], [], '--', color='darkred', alpha=0.5)
+                t_icon, = ax.plot([], [], 'rD', markersize=8, label=f'Intruder {traffic_id}')
+                
+                traffic_lines[traffic_id] = t_line
+                traffic_icons[traffic_id] = t_icon
     else:
         logging.info("No traffic data found for animation.")
 
@@ -211,10 +239,10 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
                         fontsize=12, verticalalignment='top', 
                         bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper right', bbox_to_anchor=(1.25, 1))
     ax.set_title('Dynamic Simulation Animation')
 
- # 2. Update Function
+    # 2. Update Function
     def update(frame):
         # Update Ownship
         if frame < len(ownship_traj):
@@ -222,21 +250,22 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
             agent_dot.set_data([ownship_traj[frame, 0]], [ownship_traj[frame, 1]])
             time_text.set_text(f'Sim Time: {time_array[frame]:.2f} s')
 
-        # Update Traffic
-        if traffic_data and isinstance(traffic_data, dict):
-            for traffic_id, positions in traffic_data.items():
-                if frame < len(positions):
-                    t_traj = np.array(positions)
-                    if t_traj.size > 0:
-                        t_traj = t_traj.reshape(-1, 2)
-                        
-                        # Update the dashed history line
-                        traffic_lines[traffic_id].set_data(t_traj[:frame+1, 0], t_traj[:frame+1, 1])
-                        
-                        # NEW: Update the Red Diamond icon to the current frame's exact coordinate
-                        traffic_icons[traffic_id].set_data([t_traj[frame, 0]], [t_traj[frame, 1]])
+        # Update Traffic using the pre-processed NaN arrays
+        for traffic_id, t_traj in processed_traffic.items():
+            if frame < len(t_traj):
+                # Update the dashed history line (NaN points will be silently ignored)
+                traffic_lines[traffic_id].set_data(t_traj[:frame+1, 0], t_traj[:frame+1, 1])
+                
+                # Update the icon ONLY if it is currently in bounds (not NaN)
+                if not np.isnan(t_traj[frame, 0]):
+                    traffic_icons[traffic_id].set_data([t_traj[frame, 0]], [t_traj[frame, 1]])
+                else:
+                    # Hide the icon entirely
+                    traffic_icons[traffic_id].set_data([], [])
+            else:
+                # Safety fallback if frame exceeds this specific agent's log length
+                traffic_icons[traffic_id].set_data([], [])
         
-        # Return all dynamic artists
         return path_line, agent_dot, time_text, *traffic_lines.values(), *traffic_icons.values()
 
     # 3. Create Animation
