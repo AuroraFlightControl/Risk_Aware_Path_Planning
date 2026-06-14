@@ -24,7 +24,7 @@ class World:
         if self.traffic is not None:
             for intruder in self.traffic:
                 intruder.update(dt=dt)
-        pass
+        
 
     
     def is_collision_free(self, point: np.ndarray, vehicle_radius: float = 1.0, time=0.0) -> bool:

@@ -34,7 +34,7 @@ class TrafficAgent:
 
     @property
     def position(self) -> np.ndarray:
-        return self.state[0:1]
+        return self.state[0:2].flatten()
     
     @property
     def velocity(self) -> np.ndarray:

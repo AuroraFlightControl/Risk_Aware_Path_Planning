@@ -54,16 +54,25 @@ class Simulation:
         self.agent = agent
         self.log = SimLog(time=[], agent_positions=[], agent_velocities=[], plan_ids=[])
 
+
     def run(self):
         """
         This function is used to run the simulation. It updates the positions and velocities of the agents at each step in the simulation and stores the data in the log.
         """
+        self.log.traffic_positions = {}
+        if self.world.traffic is not None:
+            for intruder in self.world.traffic:
+                self.log.traffic_positions[intruder.id] = []
+
         # Run the simulation loop
         current_time = 0.0
         while current_time < self.config.max_Time:
  
-            # Update the positions and velocities of the agents here
+            # Update the positions and velocities of the agent
             self.agent.step(self.config.dt)
+
+            # Update World
+            self.world.step(dt=self.config.dt)
 
             # Check for collisions and other failure conditions
             if not self.world.is_collision_free(self.agent.position, vehicle_radius=self.agent.radius, time=current_time):
@@ -82,6 +91,10 @@ class Simulation:
             self.log.time.append(current_time)
             self.log.agent_positions.append(self.agent.position.copy())
             self.log.agent_velocities.append(self.agent.velocity.copy())
+
+            if self.world.traffic is not None:
+                for intruder in self.world.traffic:
+                    self.log.traffic_positions[intruder.id].append(intruder.position.copy())
 
             # Increment the time
             current_time += self.config.dt

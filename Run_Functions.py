@@ -50,12 +50,13 @@ def load_Traffic(scene_Data: dict):
     traffic = []
     traffic_id = 0
     for intruder in scene_Data["Intruders"]:
+        
         if intruder["Type"] == "Constant_Velocity":
-
-            x = intruder["x"]
-            y = intruder["y"]
-            vx = intruder["vx"]
-            vy = intruder["vy"]
+            logging.info("Loading Constant Velocity Traffic Agent")
+            x = intruder["Start_X"]
+            y = intruder["Start_Y"]
+            vx = intruder["Velocity_X"]
+            vy = intruder["Velocity_Y"]
 
             traffic.append(TrafficAgent(agent_id=traffic_id, initial_state=np.array([x, y, vx, vy]), strategy=ConstantVelocityStrategy()))
 
@@ -63,6 +64,8 @@ def load_Traffic(scene_Data: dict):
             
         else:
             raise ValueError(f"Unknown traffic type {intruder["Type"]}")
+        
+    return traffic
 
 def load_World(scene_Data: dict) -> World:
 
@@ -132,15 +135,18 @@ def run_Single(config_Data: dict, planner: Optional[Planner] = None):
     occupyGrid = OccupyGrid(world=world, resolution=0.5)
     occupyGrid.build_grid()
 
-    visualize_occupancy_grid(world=world, occ_grid=occupyGrid)
+    #visualize_occupancy_grid(world=world, occ_grid=occupyGrid)
 
 
 
     # Visualize the results
     #visualize_enviroment(world)
     #visualize_trajectory(world, np.array(simulation_log.agent_positions))
-    visualize_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time))
+    #visualize_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time))
     #animate_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time), playback_speed_ms=50)
+
+    visualize_SimLog(world=world, log=simulation_log)
+    animate_trajectory_with_traffic(world=world, log=simulation_log)
     
 
 
