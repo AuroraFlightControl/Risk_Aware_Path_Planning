@@ -187,18 +187,21 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
 
     # 1. Initialize Graphic Objects
     path_line, = ax.plot([], [], 'b-', alpha=0.6, label='Ownship History')
-    agent_dot, = ax.plot([], [], 'ko', markersize=8, label='Ownship') 
+    agent_dot, = ax.plot([], [], 'bo', markersize=8, label='Ownship') # Blue circle for ownship
     
-    # Safely extract the traffic dictionary, checking both potential attribute names
     traffic_data = getattr(log, 'traffic_telemetry', getattr(log, 'traffic_positions', None))
     
-    # Initialize a dictionary to hold the Line2D objects for traffic
     traffic_lines = {}
+    traffic_icons = {} # NEW: Dictionary to hold the current position markers
+    
     if traffic_data and isinstance(traffic_data, dict):
         for traffic_id in traffic_data.keys():
-            # Create a unique dashed line for each traffic agent
-            t_line, = ax.plot([], [], '--', alpha=0.7, label=f'Traffic {traffic_id} History')
+            t_line, = ax.plot([], [], '--', color='darkred', alpha=0.5)
+            # NEW: 'rD' creates a Red Diamond. You can swap to 'rv' for a down-triangle or 'rX' for a cross
+            t_icon, = ax.plot([], [], 'rD', markersize=8, label=f'Intruder {traffic_id}')
+            
             traffic_lines[traffic_id] = t_line
+            traffic_icons[traffic_id] = t_icon
     else:
         logging.info("No traffic data found for animation.")
 
@@ -209,7 +212,7 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
     ax.legend(loc='upper right')
     ax.set_title('Dynamic Simulation Animation')
 
-    # 2. Update Function
+ # 2. Update Function
     def update(frame):
         # Update Ownship
         if frame < len(ownship_traj):
@@ -223,13 +226,16 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
                 if frame < len(positions):
                     t_traj = np.array(positions)
                     if t_traj.size > 0:
-                        # Force the array into a strict 2D shape (N rows, 2 columns) to prevent index errors
                         t_traj = t_traj.reshape(-1, 2)
-                        # Update this specific traffic line up to the current frame
+                        
+                        # Update the dashed history line
                         traffic_lines[traffic_id].set_data(t_traj[:frame+1, 0], t_traj[:frame+1, 1])
+                        
+                        # NEW: Update the Red Diamond icon to the current frame's exact coordinate
+                        traffic_icons[traffic_id].set_data([t_traj[frame, 0]], [t_traj[frame, 1]])
         
         # Return all dynamic artists
-        return path_line, agent_dot, time_text, *traffic_lines.values()
+        return path_line, agent_dot, time_text, *traffic_lines.values(), *traffic_icons.values()
 
     # 3. Create Animation
     ani = FuncAnimation(fig, update, frames=len(ownship_traj), 
