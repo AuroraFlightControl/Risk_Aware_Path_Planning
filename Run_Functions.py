@@ -1,14 +1,16 @@
 import logging, json, time
+from pathlib import Path
 import numpy as np
-from typing import Optional
+from typing import Optional, Any
 
 # Enviroment Imports
-from plan_src.planner_base import Planner
-from sim_src.agents.Holonomic_Agent import HolonomicAgent
 from sim_src.enviroment.World import World
 from sim_src.enviroment.Bounds import Bounds
 from sim_src.enviroment.Obstacle import CircularObstacle, RectObstacle_Aligned, PolyObstacle
+
 # Agent Imports
+from sim_src.agents.Traffic_Agent import *
+from sim_src.agents.Holonomic_Agent import HolonomicAgent
 
 # Simulation Imports
 from sim_src.simulation.Simulation import Agent, Simulation, SimConfig, SimLog
@@ -19,6 +21,8 @@ from visualizations.Occupy_Grid_Viz import *
 
 # Planning Modules Imports
 from plan_src.Occupy_Grid import OccupyGrid
+from plan_src.planner_base import Planner
+from plan_src.A_Star import AStarGridPlanner
 
 
 # Functions to load the enviroment for the simulation and establish the World Object
@@ -45,7 +49,25 @@ def load_Obstacles(scene_Data: dict):
     return obstacles
 
 def load_Traffic(scene_Data: dict):
-    pass
+    traffic = []
+    traffic_id = 0
+    for intruder in scene_Data["Intruders"]:
+        
+        if intruder["Type"] == "Constant_Velocity":
+            logging.info("Loading Constant Velocity Traffic Agent")
+            x = intruder["Start_X"]
+            y = intruder["Start_Y"]
+            vx = intruder["Velocity_X"]
+            vy = intruder["Velocity_Y"]
+
+            traffic.append(TrafficAgent(agent_id=traffic_id, initial_state=np.array([x, y, vx, vy]), strategy=ConstantVelocityStrategy()))
+
+            traffic_id += 1
+            
+        else:
+            raise ValueError(f"Unknown traffic type {intruder['Type']}")
+        
+    return traffic
 
 def load_World(scene_Data: dict) -> World:
 
@@ -59,20 +81,33 @@ def load_World(scene_Data: dict) -> World:
 
 
 # Functions to load agents and planners for the simulation and establish the Agent Objects
-def load_Planner(planner_Data: dict) -> None: # Planner
-    pass
+def load_Planner(world: World, planner_Config: str = "AStar_Alpha"): # Planner
+    filename = f"{planner_Config}.json" if not planner_Config.endswith('.json') else planner_Config
+    PLAN_CONFIG = Path("plan_src") / Path("Planner_Config") / filename
+    # Load the configuration file
+    with open(PLAN_CONFIG, 'r') as f:
+        planconfig = json.load(f)
 
-def load_Agent(config: dict, world: World, planner: Optional[Planner] = None) -> Agent:
+    if planconfig['name'] == 'A* Grid Planner':
+        planner = AStarGridPlanner(world=world, resolution=planconfig['resolution'], vehicle_radius=planconfig['vehicle_radius'], connect8=(planconfig["move_type"] == 'Connect8'))
+        logging.info(f'Loading A* Grid Planner')
+    else:
+        planner = AStarGridPlanner(world=world)
+        logging.error(f'Planner of Unkown Type {planconfig['name']}, Loading A* Default')
+
+    return planner
+
+def load_Agent(config: dict, world: World, planner: Optional[Any] = None) -> Agent:
     if "Agent" not in config:
         logging.error("Agent configuration missing in config file.")
         if planner is not None:
             logging.info(f"Loading default Holonomic Agent with radius {config['Radius']} and planner {planner}")
-            return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal, planner=planner, world=world)
+            return HolonomicAgent(position=world.start.copy(), velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal.copy(), planner=planner, world=world)
         else:
-            return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal, world=world)
+            return HolonomicAgent(position=world.start.copy(), velocity=np.array([0, 0]), radius=config["Radius"], current_trgt=world.goal.copy(), world=world)
     if config["Agent"]["Type"] == "Holonomic" or config["Agent"]["Type"] == "Quad":
         logging.info(f"Loading {config['Agent']['Type']} Agent with radius {config['Agent']['Radius']}")
-        return HolonomicAgent(position=world.start, velocity=np.array([0, 0]), radius=config["Agent"]["Radius"], current_trgt=world.goal, planner=planner, world=world)
+        return HolonomicAgent(position=world.start.copy(), velocity=np.array([0, 0]), radius=config["Agent"]["Radius"], current_trgt=world.goal.copy(), planner=planner, world=world)
     else:
         logging.error(f"Unknown agent type: {config['Agent']['Type']}")
         raise ValueError(f"Unknown agent type: {config['Agent']['Type']}")
@@ -105,8 +140,9 @@ def run_Simulation(simulation: Simulation) -> SimLog:
     return simulation.log
 
 
-def run_Single(config_Data: dict, planner: Optional[Planner] = None):
+def run_Single(config_Data: dict, planner_Config: str = "AStar_Alpha"):
     world = load_World(config_Data)
+    planner = load_Planner(world=world, planner_Config=planner_Config)
     agent = load_Agent(config=config_Data, world=world, planner=planner)
     simulation = load_Simulation(config_Data=config_Data, world=world, agent=agent)
     simulation_log = run_Simulation(simulation)
@@ -115,15 +151,18 @@ def run_Single(config_Data: dict, planner: Optional[Planner] = None):
     occupyGrid = OccupyGrid(world=world, resolution=0.5)
     occupyGrid.build_grid()
 
-    visualize_occupancy_grid(world=world, occ_grid=occupyGrid)
+    #visualize_occupancy_grid(world=world, occ_grid=occupyGrid)
 
 
 
     # Visualize the results
     #visualize_enviroment(world)
     #visualize_trajectory(world, np.array(simulation_log.agent_positions))
-    visualize_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time))
+    #visualize_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time))
     #animate_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time), playback_speed_ms=50)
+
+    visualize_SimLog(world=world, log=simulation_log)
+    animate_trajectory_with_traffic(world=world, log=simulation_log)
     
 
 

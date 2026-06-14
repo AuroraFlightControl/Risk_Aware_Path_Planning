@@ -5,6 +5,8 @@ import math, logging
 
 
 from sim_src.enviroment.World import World
+from sim_src.simulation.logging import *
+from sim_src.agents.Traffic_Agent import TrafficAgent
 
 class Agent(Protocol):
     position: np.ndarray
@@ -24,19 +26,23 @@ class SimConfig:
     dt: float = 0.1         # Time step for the simulation (in seconds)
     max_Time: float = 60.0  # Maximum time for the simulation to run (in seconds)
 
+'''
 @dataclass
 class SimLog:
     """
     This is a class to store the log of the simulation. It is used to store the data of the simulation for later analysis.
     """
-    time: list       # List to store the time of each step in the simulation
+    time: list[float]       # List to store the time of each step in the simulation
     agent_positions: list[np.ndarray] # List to store the positions of the agents at each step in the simulation
     agent_velocities: list[np.ndarray] # List to store the velocities of the agents at each step in the simulation
     plan_ids: list[int] # List to store the plan ids of the agents at each step in the simulation
+
+    traffic_telemetry: dict[int, list[np.ndarray]]
+
     success: bool = False # Flag to indicate if the simulation was successful or not
     reason: Optional[str] = None # Reason for failure if the simulation was not successful
-
-    traffic_positions: Optional[list[np.ndarray]] = None # List to store the positions of the traffic at each step in the simulation
+'''
+    
 
 class Simulation:
     """
@@ -48,16 +54,25 @@ class Simulation:
         self.agent = agent
         self.log = SimLog(time=[], agent_positions=[], agent_velocities=[], plan_ids=[])
 
+
     def run(self):
         """
         This function is used to run the simulation. It updates the positions and velocities of the agents at each step in the simulation and stores the data in the log.
         """
+        self.log.traffic_positions = {}
+        if self.world.traffic is not None:
+            for intruder in self.world.traffic:
+                self.log.traffic_positions[intruder.id] = []
+
         # Run the simulation loop
         current_time = 0.0
         while current_time < self.config.max_Time:
  
-            # Update the positions and velocities of the agents here
+            # Update the positions and velocities of the agent
             self.agent.step(self.config.dt)
+
+            # Update World
+            self.world.step(dt=self.config.dt)
 
             # Check for collisions and other failure conditions
             if not self.world.is_collision_free(self.agent.position, vehicle_radius=self.agent.radius, time=current_time):
@@ -76,6 +91,10 @@ class Simulation:
             self.log.time.append(current_time)
             self.log.agent_positions.append(self.agent.position.copy())
             self.log.agent_velocities.append(self.agent.velocity.copy())
+
+            if self.world.traffic is not None:
+                for intruder in self.world.traffic:
+                    self.log.traffic_positions[intruder.id].append(intruder.position.copy())
 
             # Increment the time
             current_time += self.config.dt

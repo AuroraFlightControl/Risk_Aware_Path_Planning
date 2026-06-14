@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from typing import List, Optional
 import numpy as np
+import math
 
 from sim_src.enviroment.Obstacle import Obstacle
 from .Bounds import Bounds
+from sim_src.agents.Traffic_Agent import TrafficAgent
 
 
 
@@ -13,12 +15,16 @@ class World:
     start: np.ndarray
     goal: np.ndarray
     obstacles: Optional[List[Obstacle]] = None
-    traffic: Optional[List[object]] = None
+    traffic: Optional[List[TrafficAgent]] = None
+
 
 
     def step(self, dt: float) -> None:
         """Advance the state of all dynamic elements in the world."""
-        pass
+        if self.traffic is not None:
+            for intruder in self.traffic:
+                intruder.update(dt=dt)
+        
 
     
     def is_collision_free(self, point: np.ndarray, vehicle_radius: float = 1.0, time=0.0) -> bool:
@@ -33,5 +39,10 @@ class World:
                     return False
 
         # Check Collisions with Traffic
+        if self.traffic is not None:
+            for intruder in self.traffic:
+                dist = np.linalg.norm(point - intruder.position)
+                if dist <= (vehicle_radius * 2):
+                    return False
 
         return True

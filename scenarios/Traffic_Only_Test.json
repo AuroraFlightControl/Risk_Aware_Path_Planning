@@ -1,0 +1,45 @@
+{
+    "Project_Name": "Test_Traffic_Visualization",
+    "Project_Description": "This is a test project for demonstration of Traffic Agent integration.",
+    "Run_Type": "Single",
+
+    "Sim_Params": {
+        "Time_Step": 0.01,
+        "Max_Time": 100.0
+    },
+
+    "Agent": {
+        "Type": "Holonomic",
+        "Radius": 1.0
+    },
+
+    "Bounds": {
+        "X_Min": 0.0,
+        "X_Max": 100.0,
+        "Y_Min": 0.0,
+        "Y_Max": 100.0
+    },
+
+    "Start": {
+        "X": 10.0,
+        "Y": 10.0
+    },
+
+    "Goal": {
+        "X": 90.0,
+        "Y": 90.0
+    },
+
+    "Obstacles": [
+    ],
+
+    "Intruders": [
+        {
+            "Type": "Constant_Velocity",
+            "Start_X": 50.0,
+            "Start_Y": 50.0,
+            "Velocity_X": 3.0,
+            "Velocity_Y": 3.0
+        }
+    ]
+}

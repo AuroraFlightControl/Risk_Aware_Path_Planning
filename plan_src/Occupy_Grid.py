@@ -18,12 +18,12 @@ class OccupyGrid:
         self.x_min, self.x_max = self.world.bounds.xmin, self.world.bounds.xmax
         self.y_min, self.y_max = self.world.bounds.ymin, self.world.bounds.ymax
 
-        x_size = int(np.ceil((self.x_max - self.x_min) / self.resolution))
-        y_size = int(np.ceil((self.y_max - self.y_min) / self.resolution))
+        self.x_size = int(np.ceil((self.x_max - self.x_min) / self.resolution))
+        self.y_size = int(np.ceil((self.y_max - self.y_min) / self.resolution))
 
         
         # Initialize grid with False (free space)
-        self.grid = np.zeros((x_size, y_size), dtype=bool)
+        self.grid = np.zeros((self.x_size, self.y_size), dtype=bool)
 
         self.mark_obstacles()
 
@@ -39,6 +39,27 @@ class OccupyGrid:
                     # Check collision (using your newly renamed method!)
                     if not self.world.is_collision_free(np.array([x, y]), vehicle_radius=1.0):
                         self.grid[i, j] = True
+
+    def to_idx(self, point: np.ndarray) -> tuple[int, int]:
+         # Get grid indicies for a given point
+        x_idx = int((point[0] - self.x_min) / self.resolution)
+        y_idx = int((point[1] - self.y_min) / self.resolution)
+        return (x_idx, y_idx)
+    
+
+    def to_point(self, point: tuple[int, int]) -> np.ndarray:
+         # Get world coodinates from grid index
+         x = 0.0
+         y = 0.0
+         return np.array([x, y], dtype=float)
+    
+    def in_bounds(self, idx: tuple[int, int]) -> bool:
+         return 0 <= idx[0] <= self.x_size and 0 <= idx[1] <= self.y_size
+    
+    def is_occupied(self, idx: tuple[int, int]) -> bool:
+         if not self.in_bounds(idx):
+              return True
+         return self.grid[idx[0], idx[1]]
 
 '''
     def mark_obstacles(self):
