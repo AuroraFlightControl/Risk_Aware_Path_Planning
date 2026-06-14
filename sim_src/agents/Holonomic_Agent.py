@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional, List
 from plan_src.planner_base import Planner, PlanResult
 from sim_src.enviroment.World import World
+import logging
 
 @dataclass
 class HolonomicAgent:
@@ -17,13 +18,16 @@ class HolonomicAgent:
     def run_planner(self):
         """Run the planner to update the path and current target."""
         if self.planner is not None:
-            if self.position != self.world.start:
-                self.PlanResult = self.planner.plan(world=self.world, start=self.position)
+            if np.allclose(self.position, self.world.start):
+                self.PlanResult = self.planner.plan(world=self.world, start=self.world.start)
             else:
-                self.PlanResult = self.planner.plan(world=self.world)
+                self.PlanResult = self.planner.plan(world=self.world, start=self.position)
             self.plan = self.PlanResult.plan
             if self.path is not None and len(self.path) > 0:
                 self.current_trgt = self.path[0]  # Update current target to the first waypoint in the path
+            else:
+                self.current_target = self.world.goal
+                logging.error('Failed to plan')
 
     def wpt_cycle(self):
         """Waypoint cycling function to update the current target based on the path."""

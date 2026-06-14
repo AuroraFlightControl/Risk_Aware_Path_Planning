@@ -1,6 +1,7 @@
 import logging, json, time
+from pathlib import Path
 import numpy as np
-from typing import Optional
+from typing import Optional, Any
 
 # Enviroment Imports
 from sim_src.enviroment.World import World
@@ -21,6 +22,7 @@ from visualizations.Occupy_Grid_Viz import *
 # Planning Modules Imports
 from plan_src.Occupy_Grid import OccupyGrid
 from plan_src.planner_base import Planner
+from plan_src.A_Star import AStarGridPlanner
 
 
 # Functions to load the enviroment for the simulation and establish the World Object
@@ -63,7 +65,7 @@ def load_Traffic(scene_Data: dict):
             traffic_id += 1
             
         else:
-            raise ValueError(f"Unknown traffic type {intruder["Type"]}")
+            raise ValueError(f"Unknown traffic type {intruder['Type']}")
         
     return traffic
 
@@ -79,10 +81,23 @@ def load_World(scene_Data: dict) -> World:
 
 
 # Functions to load agents and planners for the simulation and establish the Agent Objects
-def load_Planner(planner_Data: dict) -> None: # Planner
-    pass
+def load_Planner(world: World, planner_Config: str = "AStar_Alpha"): # Planner
+    filename = f"{planner_Config}.json" if not planner_Config.endswith('.json') else planner_Config
+    PLAN_CONFIG = Path("plan_src") / Path("Planner_Config") / filename
+    # Load the configuration file
+    with open(PLAN_CONFIG, 'r') as f:
+        planconfig = json.load(f)
 
-def load_Agent(config: dict, world: World, planner: Optional[Planner] = None) -> Agent:
+    if planconfig['name'] == 'A* Grid Planner':
+        planner = AStarGridPlanner(world=world, resolution=planconfig['resolution'], vehicle_radius=planconfig['vehicle_radius'], connect8=(planconfig["move_type"] == 'Connect8'))
+        logging.info(f'Loading A* Grid Planner')
+    else:
+        planner = AStarGridPlanner(world=world)
+        logging.error(f'Planner of Unkown Type {planconfig['name']}, Loading A* Default')
+
+    return planner
+
+def load_Agent(config: dict, world: World, planner: Optional[Any] = None) -> Agent:
     if "Agent" not in config:
         logging.error("Agent configuration missing in config file.")
         if planner is not None:
@@ -125,8 +140,9 @@ def run_Simulation(simulation: Simulation) -> SimLog:
     return simulation.log
 
 
-def run_Single(config_Data: dict, planner: Optional[Planner] = None):
+def run_Single(config_Data: dict, planner_Config: str = "AStar_Alpha"):
     world = load_World(config_Data)
+    planner = load_Planner(world=world, planner_Config=planner_Config)
     agent = load_Agent(config=config_Data, world=world, planner=planner)
     simulation = load_Simulation(config_Data=config_Data, world=world, agent=agent)
     simulation_log = run_Simulation(simulation)

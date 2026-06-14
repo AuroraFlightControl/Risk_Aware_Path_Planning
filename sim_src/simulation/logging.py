@@ -58,38 +58,85 @@ class MetricsEvaluator:
         pass
 
 
-    class PlannerLogger:
-        def __init__(self, log_dir: str, plan_id: int = 0, debug_mode = False):
-            self.log_dir = log_dir
-            self.plan_id = plan_id
-            self.debug_mode = debug_mode
-            self.sampled_points = []
-            self.plans = []
+import os
+import csv
+import numpy as np
+from plan_src.planner_base import PlanResult
 
-        def log_node(self, point: np.ndarray, point_type: str, point_cost: float, edge_cost: float, total_cost: float):
-            # Point Type: "sampled", "rewire", "goal", etc
-            if not self.debug_mode:
-                return
-            
-            self.sampled_points.append({
-                "plan_id": self.plan_id,
-                "x": float(point[0]),
-                "y": float(point[1]),
-                "type": point_type,
-                "point_cost": float(point_cost),
-                "edge_cost": float(edge_cost),
-                "total_path_cost": float(total_cost)
-            })
+class PlannerLogger:
+    def __init__(self, log_dir: str, plan_id: int = 0, debug_mode: bool = False):
+        self.log_dir = log_dir
+        self.plan_id = plan_id
+        self.debug_mode = debug_mode
+        self.sampled_points = []
+        self.plans = []
 
-        def log_result(self, Timestamp: float, PlannerResult: PlanResult):
-            pass
+    def log_node(self, point: np.ndarray, point_type: str, point_cost: float, edge_cost: float, total_cost: float):
+        # Point Type: "sampled", "rewired", "goal", etc.
+        if not self.debug_mode:
+            return
+        
+        self.sampled_points.append({
+            "plan_id": self.plan_id,
+            "x": float(point[0]),
+            "y": float(point[1]),
+            "type": point_type,
+            "point_cost": float(point_cost),
+            "edge_cost": float(edge_cost),
+            "total_path_cost": float(total_cost)
+        })
 
-        def save_log(self, filename: str):
-            # TODO: Add Standard Plan log for replanning. Log and save the final path with the plan id and the computation time
+    def log_result(self, timestamp: float, result: PlanResult, computation_time: float):
+        """
+        Logs the final result of a planning cycle. 
+        computation_time is added to capture the evaluation metric.
+        """
+        self.plans.append({
+            "plan_id": self.plan_id,
+            "timestamp": timestamp,
+            "success": result.success,
+            "info": result.info,
+            "computation_time": computation_time,
+            # Convert numpy arrays to standard lists for easier flat-file saving
+            "path": [pt.tolist() for pt in result.plan] if result.plan is not None else []
+        })
+        
+        # Increment plan_id so the next dynamic replan trigger is uniquely tracked
+        self.plan_id += 1
+
+    def save_log(self, filename_prefix: str = "run_0"):
+        """Saves the standard plan metrics and the debug sampled points to CSVs."""
+        os.makedirs(self.log_dir, exist_ok=True)
+        
+        # 1. Save the Standard Plan Log (The final paths and computation metrics)
+        paths_filepath = os.path.join(self.log_dir, f"{filename_prefix}_paths.csv")
+        with open(paths_filepath, 'w', newline='') as f:
+            writer = csv.writer(f)
+            # Write header
+            writer.writerow(["plan_id", "timestamp", "success", "computation_time", "waypoint_idx", "x", "y", "reason"])
             
-            
-            if self.debug_mode:
-                # TODO: Craft the CSV file saving logic for the logged sampled points 
-                pass
-            
+            for plan in self.plans:
+                if plan["success"] and len(plan["path"]) > 0:
+                    for idx, pt in enumerate(plan["path"]):
+                        writer.writerow([
+                            plan["plan_id"], plan["timestamp"], plan["success"], 
+                            plan["computation_time"], idx, pt[0], pt[1], plan["reason"]
+                        ])
+                else:
+                    # Log the failure event without waypoints
+                    writer.writerow([
+                        plan["plan_id"], plan["timestamp"], plan["success"], 
+                        plan["computation_time"], -1, "", "", plan["reason"]
+                    ])
+
+        # 2. Save the Debug Sampled Points (Only if debug_mode was True)
+        if self.debug_mode and len(self.sampled_points) > 0:
+            debug_filepath = os.path.join(self.log_dir, f"{filename_prefix}_sampled_nodes.csv")
+            with open(debug_filepath, 'w', newline='') as f:
+                # Extract headers dynamically from the first dictionary keys
+                fieldnames = ["plan_id", "x", "y", "type", "point_cost", "edge_cost", "total_path_cost"]
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                
+                writer.writeheader()
+                writer.writerows(self.sampled_points)
             

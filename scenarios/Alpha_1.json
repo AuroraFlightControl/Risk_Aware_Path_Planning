@@ -1,0 +1,83 @@
+{
+    "Project_Name": "Alpha 1 World",
+    "Project_Description": "A Traffic and Obstacle Ladient world for planner testing.",
+    "Run_Type": "Single",
+
+    "Sim_Params": {
+        "Time_Step": 0.01,
+        "Max_Time": 300.0
+    },
+
+    "Agent": {
+        "Type": "Holonomic",
+        "Radius": 1.0
+    },
+
+    "Bounds": {
+        "X_Min": 0.0,
+        "X_Max": 300.0,
+        "Y_Min": 0.0,
+        "Y_Max": 300.0
+    },
+
+    "Start": {
+        "X": 20.0,
+        "Y": 20.0
+    },
+
+    "Goal": {
+        "X": 280.0,
+        "Y": 280.0
+    },
+
+    "Obstacles": [
+        {
+            "Type": "Circle",
+            "Center_X": 150.0,
+            "Center_Y": 30.0,
+            "Radius": 30.0
+        },
+        {
+            "Type": "Circle",
+            "Center_X": 220.0,
+            "Center_Y": 180.0,
+            "Radius": 30.0
+        },
+        {
+            "Type": "Rectangle",
+            "xmin": 40.0,
+            "ymin": 100.0,
+            "xmax": 100.0,
+            "ymax": 160.0
+        },
+        {
+            "Type": "Rectangle",
+            "xmin": 220.0,
+            "ymin": 220.0,
+            "xmax": 270.0,
+            "ymax": 270.0
+        },
+        {
+            "Type": "Polygon",
+            "Vert_x": [110.0, 160.0, 190.0, 190.0, 140.0, 100.0],
+            "Vert_y": [190.0, 190.0, 220.0, 270.0, 270.0, 230.0]
+        }
+    ],
+
+    "Intruders": [
+        {
+            "Type": "Constant_Velocity",
+            "Start_X": 270.0,
+            "Start_Y": 80.0,
+            "Velocity_X":  -10.0,
+            "Velocity_Y": 0.0
+        },
+        {
+            "Type": "Constant_Velocity",
+            "Start_X": 10.0,
+            "Start_Y": 200.0,
+            "Velocity_X":  10.0,
+            "Velocity_Y": -3.0
+        }
+    ]
+}

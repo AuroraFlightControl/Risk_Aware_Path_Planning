@@ -18,12 +18,12 @@ class OccupyGrid:
         self.x_min, self.x_max = self.world.bounds.xmin, self.world.bounds.xmax
         self.y_min, self.y_max = self.world.bounds.ymin, self.world.bounds.ymax
 
-        x_size = int(np.ceil((self.x_max - self.x_min) / self.resolution))
-        y_size = int(np.ceil((self.y_max - self.y_min) / self.resolution))
+        self.x_size = int(np.ceil((self.x_max - self.x_min) / self.resolution))
+        self.y_size = int(np.ceil((self.y_max - self.y_min) / self.resolution))
 
         
         # Initialize grid with False (free space)
-        self.grid = np.zeros((x_size, y_size), dtype=bool)
+        self.grid = np.zeros((self.x_size, self.y_size), dtype=bool)
 
         self.mark_obstacles()
 
@@ -52,6 +52,14 @@ class OccupyGrid:
          x = 0.0
          y = 0.0
          return np.array([x, y], dtype=float)
+    
+    def in_bounds(self, idx: tuple[int, int]) -> bool:
+         return 0 <= idx[0] <= self.x_size and 0 <= idx[1] <= self.y_size
+    
+    def is_occupied(self, idx: tuple[int, int]) -> bool:
+         if not self.in_bounds(idx):
+              return True
+         return self.grid[idx[0], idx[1]]
 
 '''
     def mark_obstacles(self):

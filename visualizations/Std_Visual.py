@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Rectangle, Polygon
 import logging
-from matplotlib.animation import FuncAnimation # Added import
+from matplotlib.animation import FuncAnimation
+
+
 
 from sim_src.enviroment.Obstacle import CircularObstacle, RectObstacle_Aligned, PolyObstacle
 from sim_src.enviroment.World import World
