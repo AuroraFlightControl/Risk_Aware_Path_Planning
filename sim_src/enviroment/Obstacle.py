@@ -76,7 +76,8 @@ class PolyObstacle:
         return float(np.max(np.linalg.norm(self.verts - c, axis=1)))
     
     def contains(self, point: np.ndarray, inflate: float = 0.0) -> bool:
-        return _point_in_poly(np.asarray(point, dtype=float), self.verts)
+        eff_inflate = max(0.0, inflate)
+        return self.distance(point) <= eff_inflate
 
     def distance(self, point: np.ndarray) -> float:
         p = np.asarray(point, dtype=float)

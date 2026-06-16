@@ -179,7 +179,7 @@ def animate_trajectory_with_time(world: World, trajectory: np.ndarray, time: np.
     # garbage collector doesn't destroy the animation if run in certain IDEs.
     return ani
 
-def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 100):
+def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 100, gui_mode: bool=False):
     visualize_world(world)
     fig = plt.gcf()
     ax = plt.gca()
@@ -258,6 +258,6 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
     # 3. Create Animation
     ani = FuncAnimation(fig, update, frames=len(ownship_traj), 
                         interval=playback_speed_ms, blit=True, repeat=False)
-    
-    plt.show()
+    if not gui_mode:
+        plt.show()
     return ani
