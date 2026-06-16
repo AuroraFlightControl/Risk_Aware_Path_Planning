@@ -16,7 +16,7 @@ This script reads the configuration file, initializes the simulation enviroment 
 """
 
 # Write the name of the configuration file here
-CONFIG_FILE = "Alpha_1.json"
+CONFIG_FILE = "Traffic_Only_Test.json"
 CONFIG_PATH = Path("scenarios") / CONFIG_FILE
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')

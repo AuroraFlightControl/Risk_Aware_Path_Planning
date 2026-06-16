@@ -92,7 +92,7 @@ def load_Planner(world: World,  save_dir: Path, planner_Config: str = "AStar_Alp
     with open(PLAN_CONFIG, 'r') as f:
         planconfig = json.load(f)
 
-    p_logger = PlannerLogger(log_dir=save_dir, debug_mode=True,)
+    p_logger = PlannerLogger(log_dir=save_dir, debug_mode=True)
     if planconfig['name'] == 'A* Grid Planner':
         planner = AStarGridPlanner(world=world, resolution=planconfig['resolution'], vehicle_radius=planconfig['vehicle_radius'], connect8=(planconfig["move_type"] == 'Connect8'), logger=p_logger)
         logging.info(f'Loading A* Grid Planner')
@@ -145,7 +145,7 @@ def run_Simulation(simulation: Simulation) -> SimLog:
     return simulation.log
 
 
-def run_Single(config_Data: dict, save_dir: Path, planner_Config: str = "AStar_Alpha", plot_run: bool = True, run_id: str = 'run'):
+def run_Single(config_Data: dict, save_dir: Path, planner_Config: str = "AStar_Alpha", plot_run: bool = True, run_id: str = 'run', gui_mode: bool = False):
     world = load_World(config_Data)
     planner = load_Planner(world=world, planner_Config=planner_Config, save_dir=save_dir)
     agent = load_Agent(config=config_Data, world=world, planner=planner)
@@ -172,7 +172,7 @@ def run_Single(config_Data: dict, save_dir: Path, planner_Config: str = "AStar_A
 
     
     # Visualizations
-    if plot_run:
+    if plot_run and not gui_mode:
         visualize_SimLog(world=world, log=simulation_log)
         animate_trajectory_with_traffic(world=world, log=simulation_log)
 

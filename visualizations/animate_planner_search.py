@@ -8,7 +8,7 @@ import logging
 from sim_src.enviroment.World import World
 from visualizations.Std_Visual import visualize_world
 
-def animate_planner_search(world: World, log_dir: str, filename_prefix: str, plan_id: int = 0, nodes_per_frame: int = 25, playback_speed_ms: int = 30):
+def animate_planner_search(world: World, log_dir: str, filename_prefix: str, plan_id: int = 0, nodes_per_frame: int = 25, playback_speed_ms: int = 30, gui_mode: bool = False):
     """
     Animates the node-by-node expansion of the planner's search tree.
     
@@ -78,5 +78,6 @@ def animate_planner_search(world: World, log_dir: str, filename_prefix: str, pla
 
     # 5. Execute Animation
     ani = FuncAnimation(fig, update, frames=total_frames, interval=playback_speed_ms, blit=True, repeat=False)
-    plt.show()
+    if not gui_mode:
+        plt.show()
     return ani
