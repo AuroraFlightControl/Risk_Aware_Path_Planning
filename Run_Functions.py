@@ -27,6 +27,7 @@ from visualizations.animate_planner_search import animate_planner_search
 from plan_src.Occupy_Grid import OccupyGrid
 from plan_src.planner_base import Planner
 from plan_src.A_Star import AStarGridPlanner
+from plan_src.RRT import RRT_Planner
 
 
 # Functions to load the enviroment for the simulation and establish the World Object
@@ -96,6 +97,9 @@ def load_Planner(world: World,  save_dir: Path, planner_Config: str = "AStar_Alp
     if planconfig['name'] == 'A* Grid Planner':
         planner = AStarGridPlanner(world=world, resolution=planconfig['resolution'], vehicle_radius=planconfig['vehicle_radius'], connect8=(planconfig["move_type"] == 'Connect8'), logger=p_logger)
         logging.info(f'Loading A* Grid Planner')
+    elif planconfig['name'] == "RRT":
+        planner = RRT_Planner(world=world)
+
     else:
         planner = AStarGridPlanner(world=world, logger=p_logger)
         logging.error(f'Planner of Unkown Type {planconfig['name']}, Loading A* Default')
