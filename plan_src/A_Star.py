@@ -1,6 +1,6 @@
 from typing import List, Optional
 import numpy as np
-import math, heapq
+import math, heapq, time
 from dataclasses import dataclass
 
 from sim_src.enviroment.World import World
@@ -15,6 +15,8 @@ class AStarGridPlanner:
     resolution: float = 0.5
     vehicle_radius: float = 1.0
     connect8: bool = True
+
+    logger: Optional[PlannerLogger] = None
 
     def search(self):
         ''' A* Search Algorithm implementation '''
@@ -65,6 +67,18 @@ class AStarGridPlanner:
                     f_score = ten_gscore + self.heuristic(a=nxt, b=self.goal_idx)
                     heapq.heappush(open_heap, (f_score, nxt))
 
+                    if self.logger:
+                        nxt_point = self.Occupancy_Grid.to_point(nxt)
+                        cur_point = self.Occupancy_Grid.to_point(cur)
+                        self.logger.log_node(
+                            point=nxt_point,
+                            point_type="sampled",
+                            point_cost=step_cost,
+                            edge_cost=step_cost,
+                            total_cost=ten_gscore,
+                            parent_point=cur_point
+                        )
+
         return PlanResult(plan=[], success=False, info={"reason": "No Path Found", "expansions": expansions})
 
     def heuristic(self, a: tuple[int, int], b: tuple[int, int]):
@@ -86,7 +100,16 @@ class AStarGridPlanner:
         if self.Occupancy_Grid.is_occupied(self.goal_idx):
             return PlanResult(plan=[], success=False, info={"reason": "Goal Position is Occupied"})
         
-        return self.search()
+        start_time = time.time()
+
+        result = self.search()
+
+        comp_time = time.time() - start_time
+
+        if self.logger:
+            self.logger.log_result(timestamp=0.0, result=result, computation_time=comp_time)
+        
+        return result
 
 
 

@@ -37,7 +37,7 @@ class OccupyGrid:
                     y = self.y_min + (j + 0.5) * self.resolution
                     
                     # Check collision (using your newly renamed method!)
-                    if not self.world.is_collision_free(np.array([x, y]), vehicle_radius=1.0):
+                    if not self.world.is_collision_free(np.array([x, y]), vehicle_radius=2.0):
                         self.grid[i, j] = True
 
     def to_idx(self, point: np.ndarray) -> tuple[int, int]:
@@ -47,10 +47,10 @@ class OccupyGrid:
         return (x_idx, y_idx)
     
 
-    def to_point(self, point: tuple[int, int]) -> np.ndarray:
+    def to_point(self, idx: tuple[int, int]) -> np.ndarray:
          # Get world coodinates from grid index
-         x = 0.0
-         y = 0.0
+         x = self.x_min + (idx[0] + 0.5) * self.resolution
+         y = self.y_min + (idx[1] + 0.5) * self.resolution
          return np.array([x, y], dtype=float)
     
     def in_bounds(self, idx: tuple[int, int]) -> bool:

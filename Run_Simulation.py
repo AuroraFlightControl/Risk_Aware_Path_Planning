@@ -7,9 +7,7 @@ from visualizations.Std_Visual import visualize_enviroment, visualize_trajectory
 from sim_src.enviroment.World import World
 from sim_src.simulation.Simulation import Simulation, SimConfig, SimLog, Agent
 
-# Remove once agent loading functionality moved to Run_Functions.py
-from sim_src.agents.Holonomic_Agent import HolonomicAgent
-import numpy as np
+from sim_src.simulation.RunSessionManager import RunSessionManager
 
 """
 This script is used to run the simulation from a given configuration file. 
@@ -18,7 +16,7 @@ This script reads the configuration file, initializes the simulation enviroment 
 """
 
 # Write the name of the configuration file here
-CONFIG_FILE = "All_Obstacles.json"
+CONFIG_FILE = "Traffic_Only_Test.json"
 CONFIG_PATH = Path("scenarios") / CONFIG_FILE
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -32,9 +30,12 @@ def main():
         logging.error(f"Failed to load configuration from {CONFIG_PATH}")
         return
     
+    session_manager = RunSessionManager(root_config=config)
+
     if config["Run_Type"] == "Single":
         logging.info(f"Running Single Simulation with configuration from {CONFIG_PATH}")
-        run_Single(config_Data=config)
+        save_directory = session_manager.get_save_dir()
+        run_Single(config_Data=config, save_dir=save_directory)
 
     if config["Run_Type"] == "Batch":
         logging.info(f"Running Batch Simulation with configuration from {CONFIG_PATH}")
@@ -43,7 +44,13 @@ def main():
                 # Load the configuration file
             with open((Path("scenarios") / run), 'r') as f:
                 config = json.load(f)
-            run_Single(config_Data=config)
+
+            save_directory = session_manager.get_save_dir()
+            run_Single(config_Data=config, save_dir=save_directory)
+
+    if config["Run_Type"] == "Comparison":
+        logging.info(f"Running Comparison SImulation from {CONFIG_PATH}")
+        
 
 
 if __name__ == "__main__":

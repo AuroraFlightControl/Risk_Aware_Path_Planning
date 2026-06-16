@@ -13,11 +13,15 @@ from sim_src.agents.Traffic_Agent import *
 from sim_src.agents.Holonomic_Agent import HolonomicAgent
 
 # Simulation Imports
-from sim_src.simulation.Simulation import Agent, Simulation, SimConfig, SimLog
+from sim_src.simulation.Simulation import Agent, Simulation, SimConfig
+from sim_src.simulation.logging import *
+from sim_src.simulation.MetricsEvaluator import MetricsEvaluator
 
 # Visualization Imports
 from visualizations.Std_Visual import *
 from visualizations.Occupy_Grid_Viz import *
+from visualizations.visualize_planner_search import visualize_planner_search
+from visualizations.animate_planner_search import animate_planner_search
 
 # Planning Modules Imports
 from plan_src.Occupy_Grid import OccupyGrid
@@ -81,18 +85,19 @@ def load_World(scene_Data: dict) -> World:
 
 
 # Functions to load agents and planners for the simulation and establish the Agent Objects
-def load_Planner(world: World, planner_Config: str = "AStar_Alpha"): # Planner
+def load_Planner(world: World,  save_dir: Path, planner_Config: str = "AStar_Alpha"): # Planner
     filename = f"{planner_Config}.json" if not planner_Config.endswith('.json') else planner_Config
     PLAN_CONFIG = Path("plan_src") / Path("Planner_Config") / filename
     # Load the configuration file
     with open(PLAN_CONFIG, 'r') as f:
         planconfig = json.load(f)
 
+    p_logger = PlannerLogger(log_dir=save_dir, debug_mode=True)
     if planconfig['name'] == 'A* Grid Planner':
-        planner = AStarGridPlanner(world=world, resolution=planconfig['resolution'], vehicle_radius=planconfig['vehicle_radius'], connect8=(planconfig["move_type"] == 'Connect8'))
+        planner = AStarGridPlanner(world=world, resolution=planconfig['resolution'], vehicle_radius=planconfig['vehicle_radius'], connect8=(planconfig["move_type"] == 'Connect8'), logger=p_logger)
         logging.info(f'Loading A* Grid Planner')
     else:
-        planner = AStarGridPlanner(world=world)
+        planner = AStarGridPlanner(world=world, logger=p_logger)
         logging.error(f'Planner of Unkown Type {planconfig['name']}, Loading A* Default')
 
     return planner
@@ -140,29 +145,38 @@ def run_Simulation(simulation: Simulation) -> SimLog:
     return simulation.log
 
 
-def run_Single(config_Data: dict, planner_Config: str = "AStar_Alpha"):
+def run_Single(config_Data: dict, save_dir: Path, planner_Config: str = "AStar_Alpha", plot_run: bool = True, run_id: str = 'run', gui_mode: bool = False):
     world = load_World(config_Data)
-    planner = load_Planner(world=world, planner_Config=planner_Config)
+    planner = load_Planner(world=world, planner_Config=planner_Config, save_dir=save_dir)
     agent = load_Agent(config=config_Data, world=world, planner=planner)
     simulation = load_Simulation(config_Data=config_Data, world=world, agent=agent)
     simulation_log = run_Simulation(simulation)
 
+    evaluator = MetricsEvaluator(log=simulation_log, world=world)
+    metrics = evaluator.generate_report()
 
-    occupyGrid = OccupyGrid(world=world, resolution=0.5)
-    occupyGrid.build_grid()
+    with open(save_dir / "run_metrics.json", "w") as f:
+        json.dump(metrics, f, indent=4)
 
-    #visualize_occupancy_grid(world=world, occ_grid=occupyGrid)
+    simulation_log.export_telemetry(save_dir=str(save_dir), filename_prefix=run_id)
+
+    # Trigger the planner logger export
+    if hasattr(planner, 'logger') and planner.logger is not None:
+        # Instead of prefixing the file, we just save standard file names because 
+        # the folder hierarchy already provides all the context needed.
+        planner.logger.save_log(filename_prefix=run_id)
+
+        if planner.logger.debug_mode:
+            visualize_planner_search(world=world, log_dir=str(save_dir), filename_prefix=run_id, plan_id=0 )
+            animate_planner_search(world=world, log_dir=str(save_dir), filename_prefix=run_id, plan_id=0)
+
+    
+    # Visualizations
+    if plot_run and not gui_mode:
+        visualize_SimLog(world=world, log=simulation_log)
+        animate_trajectory_with_traffic(world=world, log=simulation_log)
 
 
-
-    # Visualize the results
-    #visualize_enviroment(world)
-    #visualize_trajectory(world, np.array(simulation_log.agent_positions))
-    #visualize_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time))
-    #animate_trajectory_with_time(world, np.array(simulation_log.agent_positions), np.array(simulation_log.time), playback_speed_ms=50)
-
-    visualize_SimLog(world=world, log=simulation_log)
-    animate_trajectory_with_traffic(world=world, log=simulation_log)
     
 
 
