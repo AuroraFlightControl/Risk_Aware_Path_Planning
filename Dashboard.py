@@ -59,6 +59,12 @@ else:
 
     # Visualization Layer Toggle
     st.sidebar.markdown("---")
+    st.sidebar.subheader("🎥 Render Settings")
+    render_throttle = st.sidebar.slider(
+        "Animation Throttle (Frame Skip)", 
+        min_value=1, max_value=20, value=5, step=1,
+        help="Higher values render faster but playback looks slightly choppier."
+    )
     viz_mode = st.sidebar.radio("Visualization Layer", [
         "Final Path Only", 
         "Show Search Tree", 
@@ -100,7 +106,51 @@ else:
             )
             world = load_World(config_Data)
 
-            st.success(f"Simulation Complete! Mission Success: {log.success}")
+            # --- NEW: METRICS DASHBOARD SECTION ---
+            st.markdown("---")
+            st.subheader("📊 Mission Debrief & Metrics")
+            
+            # 1. High-Level Status Banners
+            if log.success:
+                st.success("✅ **Mission Accomplished:** UAV reached the target safely.")
+            else:
+                st.error(f"❌ **Mission Failed:** {log.reason}")
+
+            # 2. Load and Display Detailed Metrics
+            metrics_file = save_dir / "run_metrics.json"
+            if metrics_file.exists():
+                with open(metrics_file, 'r') as f:
+                    metrics = json.load(f)
+                
+                # Check for an outright planner failure (no paths generated)
+                if metrics.get('total_replans', 0) == 0 and not log.success:
+                    st.warning("⚠️ **Planner Alert:** The algorithmic planner failed to find a valid route.")
+                
+                # Display core metrics in a clean row
+                col1, col2, col3, col4 = st.columns(4)
+                
+                with col1:
+                    sep = metrics.get("min_safe_separation_ft")
+                    sep_text = f"{sep:.2f} ft" if sep is not None else "N/A"
+                    st.metric(label="Min Safe Separation", value=sep_text)
+                    
+                with col2:
+                    static_viol = metrics.get("static_violation", False)
+                    # Using delta_color="inverse" makes "Clear" show up green and "Crash" show up red
+                    st.metric(label="Static Violations", value="Yes" if static_viol else "None", 
+                              delta="- Crash" if static_viol else "Clear", delta_color="inverse")
+                    
+                with col3:
+                    traffic_viol = metrics.get("traffic_violation", False)
+                    st.metric(label="Traffic Violations", value="Yes" if traffic_viol else "None",
+                              delta="- Conflict" if traffic_viol else "Clear", delta_color="inverse")
+                    
+                with col4:
+                    avg_time = metrics.get("avg_replan_computation_sec", 0.0)
+                    st.metric(label="Avg Compute Time", value=f"{avg_time:.4f} s")
+                    
+            st.markdown("---")
+            # --------------------------------------
 
             # 4. Render the Results
             st.subheader(f"Simulation Results: {viz_mode}")
@@ -140,32 +190,37 @@ else:
             # --- LAYER 4: The Animation Player ---
             elif viz_mode == "Animate Search Process":
                 with st.spinner("Compiling Animation Video (This takes a few seconds)..."):
-                    # Call the function with gui_mode=True to prevent popups
-                    ani = animate_planner_search(world=world, log_dir=str(save_dir), filename_prefix="run", plan_id=0, gui_mode=True, nodes_per_frame=10)
+                    
+                    # Dynamically calculate batch size based on the throttle slider
+                    # E.g., Throttle 5 = 250 nodes per frame. Throttle 1 = 50 nodes per frame.
+                    batch_size = render_throttle * 50 
+                    
+                    ani = animate_planner_search(
+                        world=world, log_dir=str(save_dir), filename_prefix="run", plan_id=0, 
+                        gui_mode=True, nodes_per_frame=batch_size
+                    )
                     
                     if ani:
-                        # Convert the Matplotlib animation to an interactive HTML5 player
                         components.html(ani.to_jshtml(), height=700)
                     else:
                         st.error("Failed to generate animation.")
-                
-                # We use 'continue' or 'return' here so it doesn't draw the static 
-                # trajectory from the "ALWAYS SHOW" block over top of the video player
                 st.stop()
 
             # --- LAYER 5: The Flight & Traffic Animation Player ---
             elif viz_mode == "Animate Flight & Traffic":
                 with st.spinner("Compiling Flight & Traffic Video..."):
-                    # Call the function passing the log object directly
-                    ani = animate_trajectory_with_traffic(world=world, log=log, playback_speed_ms=50, gui_mode=True)
+                    
+                    ani = animate_trajectory_with_traffic(
+                        world=world, log=log, playback_speed_ms=50, 
+                        gui_mode=True, frame_skip=render_throttle # <--- NEW PARAMETER
+                    )
                     
                     if ani:
-                        # Convert to an interactive HTML5 player
                         components.html(ani.to_jshtml(), height=700)
                     else:
                         st.error("Failed to generate animation.")
                 
-                st.stop() # Prevent drawing the static trajectory over the video
+                st.stop()
 
             # --- ALWAYS SHOW: The Flown Trajectory ---
             if log.agent_positions:
