@@ -46,7 +46,8 @@ def visualize_world(world: World):
 
     # Plot With Grid
     ax.grid(True)
-    ax.legend()
+    ax.legend(loc='upper right', bbox_to_anchor=(1.5, 1))
+    fig.tight_layout()
 
     ax.set_title('World Visualization')
     ax.set_xlabel('Position X (feet)')
@@ -54,14 +55,16 @@ def visualize_world(world: World):
 
 def visualize_enviroment(world: World):
     visualize_world(world)
-    plt.legend()
+    plt.legend(loc='upper right', bbox_to_anchor=(1.5, 1))
+    plt.tight_layout()
     plt.title('World Visualization')
     plt.show()
 
 def visualize_trajectory(world: World, trajectory: np.ndarray):
     visualize_world(world)
     plt.plot(trajectory[:, 0], trajectory[:, 1], 'b-', label='Trajectory')
-    plt.legend()
+    plt.legend(loc='upper right', bbox_to_anchor=(1.5, 1))
+    plt.tight_layout()
     plt.title('Trajectory Visualization')
     plt.show()
 
@@ -71,7 +74,8 @@ def visualize_trajectory_with_time(world: World, trajectory: np.ndarray, time: n
     for i in range(len(trajectory)):
         if i % 100 == 0:  # Annotate every 100th point to avoid clutter
             plt.text(trajectory[i, 0], trajectory[i, 1], f'{time[i]:.1f}s', fontsize=8, ha='right')
-    plt.legend()
+    plt.legend(loc='upper right', bbox_to_anchor=(1.5, 1))
+    plt.tight_layout()
     plt.title('Trajectory Visualization with Time Annotations')
     plt.show()
 
@@ -119,7 +123,8 @@ def visualize_SimLog(world: World, log: SimLog):
     else:
         logging.info('No traffic to visualize.')
 
-    plt.legend()
+    plt.legend(loc='upper right', bbox_to_anchor=(1.5, 1))
+    plt.tight_layout()
     plt.title('Simulation Log Visualization')
     plt.show()
 
@@ -151,7 +156,8 @@ def animate_trajectory_with_time(world: World, trajectory: np.ndarray, time: np.
                         bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
     # Update the legend and title to reflect the animation elements
-    ax.legend(loc='upper right')
+    ax.legend(loc='upper right', bbox_to_anchor=(1.5, 1))
+    fig.tight_layout()
     ax.set_title('Agent Trajectory Animation')
 
     # 3. The update function called for each frame
@@ -179,13 +185,16 @@ def animate_trajectory_with_time(world: World, trajectory: np.ndarray, time: np.
     # garbage collector doesn't destroy the animation if run in certain IDEs.
     return ani
 
-def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 100, gui_mode: bool=False):
+def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 100, frame_skip: int = 1, gui_mode: bool=False):
     visualize_world(world)
     fig = plt.gcf()
     ax = plt.gca()
 
-    ownship_traj = np.array(log.agent_positions)
-    time_array = np.array(log.time)
+    # 0. THROTTLE: Downsample the base arrays
+    ownship_traj = np.array(log.agent_positions)[::frame_skip]
+    time_array = np.array(log.time)[::frame_skip]
+
+    
 
     # 1. Initialize Graphic Objects
     path_line, = ax.plot([], [], 'b-', alpha=0.6, label='Ownship History')
@@ -204,6 +213,7 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
             t_traj = np.array(positions)
             if t_traj.size > 0:
                 t_traj = t_traj.reshape(-1, 2).astype(float)
+                t_traj = t_traj[::frame_skip]
                 
                 # Find out-of-bounds points
                 oob_mask = (t_traj[:, 0] < world.bounds.xmin) | \
@@ -225,7 +235,7 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
                         fontsize=12, verticalalignment='top', 
                         bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
-    ax.legend(loc='upper right', bbox_to_anchor=(1.25, 1))
+    ax.legend(loc='upper right', bbox_to_anchor=(1.5, 1))
     ax.set_title('Dynamic Simulation Animation')
     fig.tight_layout()
 

@@ -1,0 +1,10 @@
+{
+    "name": "RRT",
+    "max_iter": 10000,
+    "step_size": 1.0,
+    "vehicle_radius": 1.0,
+    "collision_step": 1.0,
+    "goal_sample_rate": 0.1,
+    "seed": 0,
+    "SF": 1.0
+}
