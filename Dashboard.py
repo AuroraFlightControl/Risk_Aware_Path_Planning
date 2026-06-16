@@ -30,7 +30,13 @@ scenario_files = [f.name for f in scenario_dir.glob("*.json")]
 if not scenario_files:
     st.sidebar.error("No JSON scenarios found in the 'scenarios' folder.")
 else:
+    # Scenario Dropdown
     selected_file = st.sidebar.selectbox("Choose Base Scenario", scenario_files)
+
+    # NEW: Planner Configuration Dropdown
+    planner_dir = Path("plan_src/Planner_Config")
+    planner_files = [f.name for f in planner_dir.glob("*.json")]
+    selected_planner = st.sidebar.selectbox("Choose Planner Config", planner_files)
 
     st.sidebar.markdown("---")
     
@@ -85,8 +91,13 @@ else:
             save_dir = Path("gui_logs")
             save_dir.mkdir(exist_ok=True)
             
-            # 3. Run the simulation using the modified dictionary
-            log = run_Single(config_Data=config_Data, save_dir=save_dir, gui_mode=True)
+            # 3. Run the simulation using the modified dictionary and selected planner
+            log = run_Single(
+                config_Data=config_Data, 
+                save_dir=save_dir, 
+                planner_Config=selected_planner, # <-- Pass the dropdown selection here
+                gui_mode=True
+            )
             world = load_World(config_Data)
 
             st.success(f"Simulation Complete! Mission Success: {log.success}")
@@ -130,7 +141,7 @@ else:
             elif viz_mode == "Animate Search Process":
                 with st.spinner("Compiling Animation Video (This takes a few seconds)..."):
                     # Call the function with gui_mode=True to prevent popups
-                    ani = animate_planner_search(world=world, log_dir=str(save_dir), filename_prefix="run", plan_id=0, gui_mode=True, nodes_per_frame=250)
+                    ani = animate_planner_search(world=world, log_dir=str(save_dir), filename_prefix="run", plan_id=0, gui_mode=True, nodes_per_frame=10)
                     
                     if ani:
                         # Convert the Matplotlib animation to an interactive HTML5 player

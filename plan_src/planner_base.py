@@ -11,7 +11,7 @@ class PlanResult:
     info: dict              # Information on what happened
 
 class Planner(Protocol):
-    def plan(self, world: World, start: Optional[np.ndarray] = None) -> PlanResult:
+    def plan(self, start: Optional[np.ndarray] = None) -> PlanResult:
         """Plan a path from start to goal in the given world."""
         ...
         

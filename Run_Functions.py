@@ -98,8 +98,8 @@ def load_Planner(world: World,  save_dir: Path, planner_Config: str = "AStar_Alp
         planner = AStarGridPlanner(world=world, resolution=planconfig['resolution'], vehicle_radius=planconfig['vehicle_radius'], connect8=(planconfig["move_type"] == 'Connect8'), logger=p_logger)
         logging.info(f'Loading A* Grid Planner')
     elif planconfig['name'] == "RRT":
-        planner = RRT_Planner(world=world)
-
+        planner = RRT_Planner(world=world, max_iter=planconfig["max_iter"], step_size=planconfig['step_size'], vehicle_radius=planconfig["vehicle_radius"], collision_step=planconfig["collision_step"], 
+                              goal_sample_rate=planconfig["goal_sample_rate"], seed=planconfig["seed"], SF=planconfig["SF"], logger=p_logger)
     else:
         planner = AStarGridPlanner(world=world, logger=p_logger)
         logging.error(f'Planner of Unkown Type {planconfig['name']}, Loading A* Default')

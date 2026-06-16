@@ -21,9 +21,9 @@ class HolonomicAgent:
 
         if self.planner is not None and self.plan is None:
             if np.allclose(self.position, self.world.start):
-                self.PlanResult = self.planner.plan(world=self.world, start=self.world.start)
+                self.PlanResult = self.planner.plan(start=self.world.start)
             else:
-                self.PlanResult = self.planner.plan(world=self.world, start=self.position)
+                self.PlanResult = self.planner.plan(start=self.position)
             self.plan = self.PlanResult.plan
             if self.plan is not None and len(self.plan) > 0:
                 self.current_trgt = self.plan[0]  # Update current target to the first waypoint in the path

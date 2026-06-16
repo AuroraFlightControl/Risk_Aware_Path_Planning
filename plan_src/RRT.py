@@ -105,6 +105,17 @@ class RRT_Planner:
             new_node.cost = float(nearest_node.cost + dist)
             nodes.append(new_node)
 
+            # Logging Functionality
+            if self.logger:
+                self.logger.log_node(
+                    point=new_node.point,          # The new RRT sample
+                    parent_point=nearest_node.point, # Where the branch connects
+                    point_type="sampled",             # Use "rewired" if doing RRT* optimizations
+                    point_cost=0.0,
+                    edge_cost= float(dist),
+                    total_cost=new_node.cost
+    )
+
             if np.linalg.norm(new_node.point - goal_node.point) <= self.step_size:
                 goal_node.parent = new_node
                 goal_node.cost = float(new_node.cost + np.linalg.norm(new_node.point - goal_node.point))

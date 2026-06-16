@@ -84,8 +84,8 @@ class AStarGridPlanner:
     def heuristic(self, a: tuple[int, int], b: tuple[int, int]):
         return math.hypot(a[0] - b[0], a[1] - b[1])*self.resolution
 
-    def plan(self, world: World, start: np.ndarray):
-        self.Occupancy_Grid = OccupyGrid(world=world, resolution=self.resolution)
+    def plan(self, start: np.ndarray):
+        self.Occupancy_Grid = OccupyGrid(world=self.world, resolution=self.resolution)
         self.Occupancy_Grid.build_grid()
 
         self. start_idx = self.Occupancy_Grid.to_idx(point=start)
@@ -94,7 +94,7 @@ class AStarGridPlanner:
         if self.Occupancy_Grid.is_occupied(self.start_idx):
             return PlanResult(plan=[], success=False, info={"reason": "Start Position is Occupied"})
 
-        self.goal_idx = self.Occupancy_Grid.to_idx(point=world.goal)
+        self.goal_idx = self.Occupancy_Grid.to_idx(point=self.world.goal)
         if not self.Occupancy_Grid.in_bounds(self.goal_idx):
             return PlanResult(plan=[], success=False, info={"reason": "Goal Position Out of Bounds"})
         if self.Occupancy_Grid.is_occupied(self.goal_idx):
