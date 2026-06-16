@@ -30,15 +30,15 @@ def visualize_world(world: World):
         for obs in world.obstacles:
             if isinstance(obs, CircularObstacle):
                 logging.info(f"Visualizing Circular Obstacle: Center=({obs.c[0]}, {obs.c[1]}), Radius={obs.r}")
-                circle = Circle((obs.c[0], obs.c[1]), obs.radius(), color='gray', alpha=0.5)
+                circle = Circle((obs.c[0], obs.c[1]), obs.radius(), color='darkred', alpha=0.5)
                 ax.add_patch(circle)
             elif isinstance(obs, RectObstacle_Aligned):
                 logging.info(f"Visualizing Rectangular Obstacle: ({obs.xmin}, {obs.ymin}) to ({obs.xmax}, {obs.ymax})")
-                rect = Rectangle((obs.xmin, obs.ymin), obs.xmax - obs.xmin, obs.ymax - obs.ymin, color='gray', alpha=0.5)
+                rect = Rectangle((obs.xmin, obs.ymin), obs.xmax - obs.xmin, obs.ymax - obs.ymin, color='darkred', alpha=0.5)
                 ax.add_patch(rect)
             elif isinstance(obs, PolyObstacle):
                 logging.info(f"Visualizing Polygonal Obstacle with vertices: {obs.verts}")
-                polygon = Polygon(obs.verts, color='gray', alpha=0.5)
+                polygon = Polygon(obs.verts, color='darkred', alpha=0.5)
                 ax.add_patch(polygon)
 
     else:
@@ -122,20 +122,6 @@ def visualize_SimLog(world: World, log: SimLog):
     plt.legend()
     plt.title('Simulation Log Visualization')
     plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def animate_trajectory_with_time(world: World, trajectory: np.ndarray, time: np.ndarray, playback_speed_ms: int = 50):
@@ -241,6 +227,7 @@ def animate_trajectory_with_traffic(world: World, log, playback_speed_ms: int = 
 
     ax.legend(loc='upper right', bbox_to_anchor=(1.25, 1))
     ax.set_title('Dynamic Simulation Animation')
+    fig.tight_layout()
 
     # 2. Update Function
     def update(frame):

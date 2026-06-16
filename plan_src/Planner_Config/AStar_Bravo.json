@@ -1,0 +1,6 @@
+{
+    "name": "A* Grid Planner",
+    "resolution": 1.0,
+    "vehicle_radius": 1.0,
+    "move_type": "Connect8"
+}

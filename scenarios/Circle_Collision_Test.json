@@ -40,11 +40,5 @@
     ],
 
     "Intruders": [
-        {
-            "Start_X": -5.0,
-            "Start_Y": -5.0,
-            "Velocity_X": 0.5,
-            "Velocity_Y": 0.5
-        }
     ]
 }

@@ -1,0 +1,13 @@
+{
+    "Project_Name": "A* Resolution Test",
+    "Project_Description": "This is a test project for testing the A* Grid Planner over multiple configuration files.",
+    "Run_Type": "Comparison",
+
+    "Scenario": "Alpha_1.json",
+
+    "Plan_Config": [
+        "AStar_Alpha.json",
+        "AStar_Bravo.json",
+        "AStar_Charlie.json"
+    ]
+}

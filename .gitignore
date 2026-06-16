@@ -1,0 +1,14 @@
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Simulation Run Outputs
+Run_Results/
+logs/
+
+# Specific Data Files (Optional: if they generate outside the above folders)
+*_paths.csv
+*_sampled_nodes.csv
+*_telemetry.csv
