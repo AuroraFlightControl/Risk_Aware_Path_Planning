@@ -26,15 +26,13 @@ class CircularObstacle:
         return self.r
     
     def contains(self, point: np.ndarray, inflate: float = 0.0) -> bool:
-        r_eff = self.r + max(0.0, inflate)
-        dist_sq = self.distance(point=point)**2
-        return dist_sq <= r_eff**2
+        r_eff =  max(0.0, inflate)
+        dist = self.distance(point=point)
+        return dist <= r_eff
 
     def distance(self, point: np.ndarray) -> float:
-        dist_sq = 0
-        for i in range(0, len(point)):
-            dist_sq += (point[i] - self.c[i])**2
-        return math.sqrt(dist_sq)
+        dist_to_center = math.dist(point, self.c)
+        return  max(0.0, dist_to_center - self.r)
     
 @dataclass
 class RectObstacle_Aligned:
@@ -55,8 +53,8 @@ class RectObstacle_Aligned:
         return (self.xmin - max(0.0, inflate) <= point[0] <= self.xmax + max(0.0, inflate) and self.ymin - max(0.0, inflate) <= point[1] <= self.ymax + max(0.0, inflate))
 
     def distance(self, point: np.ndarray) -> float:
-        dx = max(self.xmin - point[0], point[0] - self.xmax)
-        dy = max(self.ymin - point[1], point[1] - self.ymax)
+        dx = max(0.0, self.xmin - point[0], point[0] - self.xmax)
+        dy = max(0.0, self.ymin - point[1], point[1] - self.ymax)
         return math.hypot(dx, dy)
 
 @dataclass

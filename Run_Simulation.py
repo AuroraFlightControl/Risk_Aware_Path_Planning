@@ -2,7 +2,7 @@ import json, logging, copy, time
 from pathlib import Path
 from typing import Any
 
-from Run_Functions import load_Agent, load_Config, load_Simulation, load_World, run_Simulation, run_Single
+from Run_Functions import load_Agent, load_Config, load_Simulation, load_World, run_Simulation, run_Single, Risk_Map_Test
 from visualizations.Std_Visual import visualize_enviroment, visualize_trajectory
 from sim_src.enviroment.World import World
 from sim_src.simulation.Simulation import Simulation, SimConfig, SimLog, Agent
@@ -16,7 +16,7 @@ This script reads the configuration file, initializes the simulation enviroment 
 """
 
 # Write the name of the configuration file here
-CONFIG_FILE = "Traffic_Only_Test.json"
+CONFIG_FILE = "Alpha_1.json"
 CONFIG_PATH = Path("scenarios") / CONFIG_FILE
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -34,8 +34,12 @@ def main():
 
     if config["Run_Type"] == "Single":
         logging.info(f"Running Single Simulation with configuration from {CONFIG_PATH}")
-        save_directory = session_manager.get_save_dir()
-        run_Single(config_Data=config, save_dir=save_directory)
+        #save_directory = session_manager.get_save_dir()
+        #run_Single(config_Data=config, save_dir=save_directory)
+
+        Risk_Map_Test(config)
+
+
 
     if config["Run_Type"] == "Batch":
         logging.info(f"Running Batch Simulation with configuration from {CONFIG_PATH}")

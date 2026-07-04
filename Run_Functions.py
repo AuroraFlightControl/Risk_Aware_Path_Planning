@@ -29,6 +29,10 @@ from plan_src.planner_base import Planner
 from plan_src.A_Star import AStarGridPlanner
 from plan_src.RRT import RRT_Planner
 
+# Risk Model
+from plan_src.RiskMonitor import RiskMonitor
+from visualizations.Risk_Heat_map import plot_risk_heatmap
+
 
 # Functions to load the enviroment for the simulation and establish the World Object
 def load_Obstacles(scene_Data: dict):
@@ -86,12 +90,16 @@ def load_World(scene_Data: dict) -> World:
 
 
 # Functions to load agents and planners for the simulation and establish the Agent Objects
-def load_Planner(world: World,  save_dir: Path, planner_Config: str = "AStar_Alpha"): # Planner
-    filename = f"{planner_Config}.json" if not planner_Config.endswith('.json') else planner_Config
-    PLAN_CONFIG = Path("plan_src") / Path("Planner_Config") / filename
-    # Load the configuration file
-    with open(PLAN_CONFIG, 'r') as f:
-        planconfig = json.load(f)
+def load_Planner(world: World,  save_dir: Path, planner_Config: Any = "AStar_Alpha"): # Planner
+    
+    if isinstance(planner_Config, dict):
+        planconfig = planner_Config
+    else:
+        # Fallback to standard file loading if passed a string
+        filename = f"{planner_Config}.json" if not planner_Config.endswith('.json') else planner_Config
+        PLAN_CONFIG = Path("plan_src") / Path("Planner_Config") / filename
+        with open(PLAN_CONFIG, 'r') as f:
+            planconfig = json.load(f)
 
     p_logger = PlannerLogger(log_dir=save_dir, debug_mode=True)
     if planconfig['name'] == 'A* Grid Planner':
@@ -149,7 +157,7 @@ def run_Simulation(simulation: Simulation) -> SimLog:
     return simulation.log
 
 
-def run_Single(config_Data: dict, save_dir: Path, planner_Config: str = "AStar_Alpha", plot_run: bool = True, run_id: str = 'run', gui_mode: bool = False):
+def run_Single(config_Data: dict, save_dir: Path, planner_Config: Any = "AStar_Alpha", plot_run: bool = True, run_id: str = 'run', gui_mode: bool = False):
     world = load_World(config_Data)
     planner = load_Planner(world=world, planner_Config=planner_Config, save_dir=save_dir)
     agent = load_Agent(config=config_Data, world=world, planner=planner)
@@ -180,8 +188,13 @@ def run_Single(config_Data: dict, save_dir: Path, planner_Config: str = "AStar_A
         visualize_SimLog(world=world, log=simulation_log)
         animate_trajectory_with_traffic(world=world, log=simulation_log)
 
-
-    
-
-
     return simulation_log
+
+
+def Risk_Map_Test(config_Data: dict):
+    world = load_World(config_Data)
+
+    risk_monitor = RiskMonitor(world=world, d_safe_obs = 15)
+    risk_map = risk_monitor.generate_static_risk_field(resolution=0.5)
+
+    plot_risk_heatmap(risk_field_data=risk_map, obstacles=world.obstacles if world.obstacles is not None else [])

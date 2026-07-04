@@ -13,6 +13,7 @@ import numpy as np
 from Run_Functions import load_World, run_Single
 from visualizations.Std_Visual import visualize_world, animate_trajectory_with_traffic
 from visualizations.animate_planner_search import animate_planner_search
+from sim_src.simulation.RunSessionManager import RunSessionManager
 
 mpl.rcParams['animation.embed_limit'] = 100.0 # Increase th embeded limit to 100MB for the animations
 
@@ -57,6 +58,13 @@ else:
         new_resolution = st.sidebar.slider("A* Grid Resolution", min_value=0.1, max_value=2.0, value=0.5, step=0.1)
         new_radius = st.sidebar.number_input("Vehicle Risk Radius", value=1.0, step=0.5)
 
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("💾 Data Logging")
+        save_permanently = st.sidebar.checkbox(
+            "Save to Run_Results", 
+            help="If checked, this run's telemetry and logs will be saved permanently for future analysis."
+        )
+
     # Visualization Layer Toggle
     st.sidebar.markdown("---")
     st.sidebar.subheader("🎥 Render Settings")
@@ -92,6 +100,26 @@ else:
                     
                 if "Planner" in config_Data:
                     config_Data["Planner"]["resolution"] = new_resolution
+
+                if save_permanently:
+                    # Use your existing session manager to generate the timestamped permanent folder
+                    session_manager = RunSessionManager(root_config=config_Data)
+                    save_dir = session_manager.get_save_dir()
+                else:
+                    # Use the temporary folder that gets overwritten
+                    save_dir = Path("gui_logs")
+                    save_dir.mkdir(exist_ok=True)
+                
+                # 4. Run the simulation
+                log = run_Single(
+                    config_Data=config_Data, 
+                    save_dir=save_dir, 
+                    planner_Config=selected_planner, 
+                    gui_mode=True
+                )
+                world = load_World(config_Data)
+                
+
             
             # We use a temporary folder for the web app logs
             save_dir = Path("gui_logs")
@@ -106,7 +134,7 @@ else:
             )
             world = load_World(config_Data)
 
-            # --- NEW: METRICS DASHBOARD SECTION ---
+            
             st.markdown("---")
             st.subheader("📊 Mission Debrief & Metrics")
             

@@ -7,7 +7,7 @@ class TrafficModelStrategy(Protocol):
         ...
 
 class ConstantVelocityStrategy:
-    '''Implements Eq. 8 and 9 from Extended Abstract: COnstant Linear Velocity State Transition'''
+    '''Implements Eq. 8 and 9 from Extended Abstract: Constant Linear Velocity State Transition'''
     def propogate(self, state: np.ndarray, dt: float) -> np.ndarray:
         # State = [x, y, vx, vy]^T
         A = np.array([
@@ -34,8 +34,14 @@ class TrafficAgent:
 
     @property
     def position(self) -> np.ndarray:
-        return self.state[0:2].flatten()
+        # Grabs index 0 and 1: [x, y]
+        return self.state[0:2]
     
     @property
     def velocity(self) -> np.ndarray:
-        return self.state[2:3]
+        # Grabs index 2 and 3: [vx, vy]
+        return self.state[2:4]
+    
+    def distance(self, point: np.ndarray) -> float:
+        '''Calculates the Euclidean distance from the agent to a given point'''
+        return float(np.linalg.norm(self.position - point))
