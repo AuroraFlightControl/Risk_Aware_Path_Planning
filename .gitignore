@@ -12,3 +12,6 @@ logs/
 *_paths.csv
 *_sampled_nodes.csv
 *_telemetry.csv
+
+# Vitrual Enviroment
+.venv
