@@ -1,0 +1,9 @@
+{
+    "mission_success": true,
+    "failure_reason": null,
+    "min_safe_separation_ft": 4.826950198897863,
+    "static_violation": false,
+    "traffic_violation": false,
+    "avg_replan_computation_sec": 0.0,
+    "total_replans": 0
+}

@@ -57,4 +57,62 @@ class ConstantVelocityModel:
         risk = (d_safe - distance) / d_safe
         
         return max(0.0, float(risk))
-    
+
+
+class CVUncertinty:
+
+    def __init__(self, sigma_a: float = 0.5) -> None:
+        self.sigma_a = sigma_a  # Acceleration noise standard deviation
+
+    def predict(self, state: tuple[np.ndarray,  np.ndarray], dt: float) -> tuple[np.ndarray, np.ndarray]:
+        # State = [x, y, vx, vy]^T
+        mu, sigma = state
+
+        F = np.array([
+            [1.0, 0.0, dt, 0.0],
+            [0.0, 1.0, 0.0, dt],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0]
+        ])
+
+        Q = self.sigma_a**2 * np.array([[(dt**4)/4, 0, (dt**3)/2, 0],
+                            [0, (dt**4)/4, 0, (dt**3)/2],
+                            [(dt**3)/2, 0, dt**2, 0],
+                            [0, (dt**3)/2, 0, dt**2]])
+
+        mu_next = F @ mu
+        sigma_next = F @ sigma @ F.T + Q
+
+        return mu_next, sigma_next
+
+    def Collision_Risk(self, traf_state: tuple[np.ndarray, np.ndarray], agent_state: np.ndarray, gamma: float) -> float:
+
+        traf_mu, traf_sigma = traf_state
+
+        H = np.array([[1, 0, 0, 0],
+                      [0, 1, 0, 0]])
+
+        # Extract 2x2 position Covariance
+        traf_sigma_p = H @ traf_sigma @ H.T
+
+        # Invert Position Covariance
+        try:
+            traf_sigma_p_inv = np.linalg.inv(traf_sigma_p)
+        except np.linalg.LinAlgError:
+            traf_sigma_p_inv = np.linalg.pinv(traf_sigma_p)
+
+        # Position Difference
+        delta_pos = traf_mu[0:2] - agent_state[0:2]
+
+        # Mahalanobis Distance
+        mahalanobis_sq = delta_pos.T @ traf_sigma_p_inv @ delta_pos
+
+        # Layered Constraint Handling
+        if mahalanobis_sq <= gamma:
+            return float('inf') # High risk if within the threshold
+        else: 
+            return float(np.exp(-0.5 * mahalanobis_sq)) # Risk decreases with distance
+        
+
+
+
